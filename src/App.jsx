@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import './styles.css';
@@ -471,68 +471,204 @@ const journeyNotes = {
 };
 const journeyScenes = journeyBeats.map((item, index) => ({ ...item, type: 'journey', zone: `journey-${index + 1}`, minutes: item.label === 'The sign-in' ? 2.5 : 1.5, note: journeyNotes[item.label] || `Let the ${item.label.toLowerCase()} visual complete before explaining it. Point to the colored route or highlighted object first; use the evidence chips only to confirm what the audience has already seen.` }));
 
-const foundations = [
+const certificateChapters = [
   {
-    label: 'The rabbit hole', zone: 'pki-goal', visual: 'goal', time: 'one sentence', minutes: 2,
-    eyebrow: 'Certificate foundation · 01', title: 'Certificates and PKI are hard. The core idea is not.',
-    thesis: 'The math is complicated and the standards are stupidly baroque. Still, the goal fits in one sentence: bind names to public keys. That’s it. The rest is implementation details.',
-    footer: ['THE WHOLE PLOT', 'NAME  ↔  PUBLIC KEY'],
-    note: 'Let the equation land before adding terminology. PKI is powerful because this binding gives code, people, and devices a portable identity—without making the network itself the security boundary.'
+    label: 'The rabbit hole', zone: 'cert-intro', visual: 'plot', time: 'the missing manual', minutes: 3,
+    eyebrow: 'Everything PKI · 01', title: 'Certificates and PKI are hard.',
+    thesis: 'The math is complicated, and the standards are stupidly baroque, but the core concepts are actually quite simple. PKI is powerful because it lets us define a system cryptographically—universally, without making the network itself the security boundary.',
+    takeaway: 'The goal of certificates and PKI is to bind names to public keys. That’s it.',
+    points: [['NAME', 'Something the system understands', 'api.shop.example'], ['PUBLIC KEY', 'Something the system can verify', 'EC P-256 · 03:A7…'], ['THE BINDING', 'One signed, portable claim', 'name ↔ public key']],
+    note: 'This is the article’s opening promise: the important concepts fit in one session. Let the one-sentence summary land before introducing terminology.'
   },
   {
-    label: 'Names and claims', zone: 'pki-identity', visual: 'identity', time: 'who is who', minutes: 3,
-    eyebrow: 'Certificate foundation · 02', title: 'An entity has an identity. A name only points at it.',
-    thesis: 'Your laptop, some code, you, and the burrito you ate for lunch are all entities. An identifier names one. An entity can claim that name; authentication is the process of checking whether the claim is true.',
-    footer: ['VOCABULARY', 'entity → identity → name → claim → authentication'],
-    note: 'Keep identity and identifier separate. Then name the PKI roles: the subscriber is named by a certificate, the CA issues it, and the relying party decides whether to trust it.'
+    label: 'A broad overview', zone: 'cert-overview', visual: 'roles', time: 'some words to know', minutes: 4,
+    eyebrow: 'A broad overview · 02', title: 'First, name the cast.',
+    thesis: 'An entity is anything that exists. Every entity has an identity; a name is merely a unique reference to it. An entity can claim a name, and authentication is the process of confirming the truth of that claim.',
+    takeaway: 'Identity is not an identifier. “Mike” is a name, not an identity.',
+    points: [['SUBSCRIBER', 'The entity named by a certificate', 'also called the subject'], ['ISSUER', 'The CA that issues the certificate', 'vouches for the binding'], ['RELYING PARTY', 'The user that verifies it', 'decides whether to trust']],
+    note: 'A single entity can be both subscriber and relying party. That is exactly what happens in mutual TLS.'
   },
   {
-    label: 'From secrets to signatures', zone: 'pki-signatures', visual: 'signatures', time: 'proving authorship', minutes: 3,
-    eyebrow: 'Certificate foundation · 03', title: 'MACs authenticate stuff. Signatures change who can prove what.',
-    thesis: 'A MAC uses a shared secret, so either party could have made it. A signature uses a key pair: only the private-key holder can sign, while anyone with the public key can verify.',
-    footer: ['IMPORTANT', 'Do not invent your own MAC. Use HMAC. Keep private keys private.'],
-    note: 'Use the split diagram to show the asymmetry. A public key verifies but cannot forge. That tighter control is the useful difference, not merely a fancier hash.'
+    label: 'MACs and signatures', zone: 'cert-signatures', visual: 'proof', time: 'authenticate stuff', minutes: 4,
+    eyebrow: 'MACs and signatures · 03', title: 'MACs authenticate stuff.',
+    thesis: 'Feed a shared secret and a message through a hash function and you get a message authentication code. A recipient with the same secret can reproduce the MAC and confirm both who sent the message and that it was not modified.',
+    takeaway: 'Do not invent your own MAC algorithm. Use HMAC.',
+    points: [['MAC', 'Sender and recipient share a secret', 'both can create proof'], ['SIGNATURE', 'Only the private-key holder signs', 'authorship is controlled'], ['VERIFY', 'The public key checks the signature', 'verification cannot forge']],
+    note: 'MACs are prologue. The real story starts with signatures: similar purpose, but a radically different distribution of authority.'
   },
   {
-    label: 'Computers can see', zone: 'pki-vision', visual: 'vision', time: 'challenge → proof', minutes: 3,
-    eyebrow: 'Certificate foundation · 04', title: 'Public key cryptography lets computers see.',
-    thesis: 'If I know your public key, I can ask you to sign a fresh random challenge. A valid signature is good evidence that I am talking to whoever holds the matching private key—without the private key ever crossing the network.',
-    footer: ['TWO POWERS', 'public encrypts → private decrypts · private signs → public verifies'],
-    note: 'Play this like vision across a network: knowing what someone looks like lets you recognize them, but it does not let you shape-shift into them. Thanks, math.'
+    label: 'Public key cryptography', zone: 'cert-cryptography', visual: 'keypair', time: 'computers can see', minutes: 4,
+    eyebrow: 'Public key cryptography · 04', title: 'Public key cryptography lets computers see.',
+    thesis: 'A key pair has a public key that can be shared with the world and a private key that must remain private. One computer can prove to another that it knows something without ever sharing that knowledge directly.',
+    takeaway: 'Public encrypts → private decrypts. Private signs → public verifies.',
+    points: [['CHALLENGE', 'Send a big fresh random number', '7F 2A 91 D4…'], ['PRIVATE KEY', 'Sign it without revealing the key', 'knowledge stays local'], ['PUBLIC KEY', 'Verify the answer across the network', 'the computer can “see” you']],
+    note: 'Use the article’s vision analogy: knowing what I look like lets you recognize me, but it does not let you shape-shift into me. Thanks, math.'
   },
   {
-    label: 'What a certificate is', zone: 'pki-certificate', visual: 'certificate', time: 'the missing public key', minutes: 3,
-    eyebrow: 'Certificate foundation · 05', title: 'A certificate is a driver’s license for computers and code.',
-    thesis: 'What if you do not already know Bob’s public key? A certificate contains a name and public key, plus the issuer’s signature. Read it as: “This issuer says this is Bob’s public key.”',
-    footer: ['FUNDAMENTALLY', 'A signed thing that binds a public key to a name.'],
-    note: 'Trust does the work. If the relying party knows and trusts the issuer’s public key, it can verify the claim and learn Bob’s public key. Expiry and usage constraints are extra fields; they do not change the core idea.'
+    label: 'Certificates', zone: 'cert-certificate', visual: 'certificate', time: 'driver’s licenses', minutes: 4,
+    eyebrow: 'Certificates · 05', title: 'Driver’s licenses for computers and code.',
+    thesis: 'What if you do not already know my public key? That is what certificates are for. A certificate contains a public key and a name, and the issuer signs the whole data structure so the signature binds the key to the name.',
+    takeaway: '“Some Issuer says Bob’s public key is 01:23:42…”',
+    points: [['SUBJECT', 'api.shop.example', 'the entity named'], ['PUBLIC KEY', 'EC P-256 · 03:A7…', 'the key being vouched for'], ['ISSUER', 'Northstar Intermediate CA', 'the signer you trust']],
+    note: 'Like a license, a real certificate has extra fields: expiry, allowed uses, and whether the holder may act as a CA. None of that changes the fundamental plot.'
   },
   {
-    label: 'The format pile', zone: 'pki-formats', visual: 'formats', time: 'annoying, not impossible', minutes: 3,
-    eyebrow: 'Certificate foundation · 06', title: 'X.509, ASN.1, DER, PEM, PKCS. Oh my.',
-    thesis: 'This part actually is annoyingly complicated. X.509 defines the certificate, ASN.1 describes its data, DER turns it into binary, and PEM wraps that binary in copy-pasteable Base64. PKCS formats are envelopes around certificates and keys.',
-    footer: ['TRANSLATION', 'definition → binary encoding → text wrapper → optional envelope'],
-    note: 'Do not teach every OID. Teach the layers. PKCS#7 can carry certificate chains; PKCS#12 can also carry a private key. If the file extensions and labels feel inconsistent, it is not you. It is the world.'
+    label: 'X.509 and friends', zone: 'cert-formats', visual: 'formats', time: 'oh my…', minutes: 5,
+    eyebrow: 'X.509, ASN.1, OIDs, DER, PEM, PKCS · 06', title: 'This part actually is annoyingly complicated.',
+    thesis: 'Most certificate frustration comes from the esoteric way certificates and keys are represented as bits and bytes. Usually “certificate” means an X.509 v3 certificate in the PKIX form browsers understand.',
+    takeaway: 'If this is confusing, it is not you. It is the world.',
+    points: [['ASN.1 → DER', 'Schema → canonical binary encoding', 'X.509 is defined here'], ['DER → PEM', 'Binary → Base64 with labels', 'BEGIN CERTIFICATE'], ['PKCS ENVELOPES', '#7 carries chains; #12 can carry keys', '.p7b / .p12 / .pfx']],
+    note: 'Teach the layers, not every OID. Extensions and file names are inconsistent; inspect the content rather than trusting the suffix.'
   },
   {
-    label: 'Trust and chains', zone: 'pki-trust', visual: 'trust', time: 'who vouches for whom', minutes: 4,
-    eyebrow: 'Certificate foundation · 07', title: 'Every trust chain ends in meatspace.',
-    thesis: 'Relying parties start with root certificates already in a trust store. Roots sign intermediates; intermediates sign leaf certificates. The leaf and intermediates travel together. The trusted root usually does not.',
-    footer: ['DO NOT', 'Disable certificate path validation. Encryption without authentication is pretty worthless.'],
-    note: 'Walk upward from leaf to root. Validation checks hostname, signatures, dates, constraints, and relevant policy. A self-signed root is trusted because of how it reached the trust store—not because self-signing is magical.'
+    label: 'Public Key Infrastructure', zone: 'cert-pki', visual: 'infrastructure', time: 'the whole system', minutes: 4,
+    eyebrow: 'Public Key Infrastructure · 07', title: 'A certificate is less than half the story.',
+    thesis: 'PKI is the umbrella term for everything needed to issue, distribute, store, use, verify, revoke, and otherwise manage certificates and keys. It is intentionally vague, like “database infrastructure.”',
+    takeaway: 'Certificates are building blocks. PKI is libraries, protocols, people, policy, and automation.',
+    points: [['ISSUE', 'Names, registration, CAs, requests', 'create the binding'], ['DISTRIBUTE + USE', 'Roots, chains, clients, servers', 'make it useful'], ['OPERATE', 'Renewal, revocation, monitoring', 'keep it trustworthy']],
+    note: 'A PKI does not even have to use certificates: authorized_keys is a simple public-key infrastructure that binds keys to names in a flat file.'
   },
   {
-    label: 'Certificate lifecycle', zone: 'pki-lifecycle', visual: 'lifecycle', time: 'automate the boring parts', minutes: 4,
-    eyebrow: 'Certificate foundation · 08', title: 'Issue short. Renew automatically. Never ship the private key.',
-    thesis: 'The subscriber generates its own key pair, sends a signed CSR, proves the name, and receives a certificate. Certificates expire, so renewal really means replacement. If that hurts, do it more: short lifetimes force the process to become automation.',
-    footer: ['REMEMBER', 'Use SANs · automate renewal · prefer short-lived certificates · validate every path'],
-    note: 'Finish on the usable operating model. The private key stays with the subscriber. The CA proves control of the name. Short-lived certificates make passive revocation practical, but require synchronized clocks and reliable renewal.'
+    label: 'Web PKI vs Internal PKI', zone: 'cert-scope', visual: 'scope', time: 'choose the right one', minutes: 5,
+    eyebrow: 'Web PKI vs Internal PKI · 08', title: 'Use Web PKI outside. Internal PKI inside.',
+    thesis: 'Web PKI is the public system your browser uses for HTTPS. Internal PKI is the system you run for your own services, containers, VMs, laptops, phones, code, and devices.',
+    takeaway: 'Use Web PKI for public websites and APIs. Use your own internal PKI for everything else.',
+    points: [['WEB PKI', 'Public DNS and browser trust', 'universal interoperability'], ['INTERNAL PKI', 'Private names and workload identity', 'your policy and automation'], ['WHY', 'Control lifetime, renewal, algorithms, scale', 'smaller trust domain']],
+    note: 'Public CAs cannot bind private IPs or names like foo.ns.svc.cluster.local. Public issuance limits and availability also make a poor dependency for fast-moving internal systems.'
+  },
+  {
+    label: 'Trust stores', zone: 'cert-trust-stores', visual: 'trust', time: 'trust begins locally', minutes: 5,
+    eyebrow: 'Trust & Trustworthiness · 09', title: 'How do I know the issuer’s public key?',
+    thesis: 'Relying parties are preconfigured with trusted root certificates in a trust store. The answer is simple, if not entirely satisfying: the roots are already there because some other trusted process put them there.',
+    takeaway: 'Every trust chain ends in meatspace.',
+    points: [['ROOT CERTIFICATE', 'A local trust anchor', 'often self-signed'], ['TRUST STORE', 'Roots accepted by this relying party', 'OS / browser / application'], ['PROVENANCE', 'How the root got there', 'the actual source of trust']],
+    note: 'A self-signature only proves possession of the root private key. Anyone can self-sign any name. A root deserves trust because of its provenance.'
+  },
+  {
+    label: 'Trustworthiness', zone: 'cert-trustworthiness', visual: 'trust', time: 'trusted ≠ trustworthy', minutes: 4,
+    eyebrow: 'Trustworthiness · 10', title: 'Trusted is descriptive. Trustworthy is moral.',
+    thesis: 'Public trust stores contain many certificate authorities. Browsers trust them by default, but history includes compromise, mistaken issuance, government pressure, and malformed certificates.',
+    takeaway: 'Your security depends on the discipline and scruples of organizations you did not choose.',
+    points: [['DESCRIPTIVE TRUST', 'The root is accepted by software', 'configured reality'], ['TRUSTWORTHINESS', 'The issuer behaves correctly', 'an empirical question'], ['INTERNAL POLICY', 'Trust fewer roots for private systems', 'reduce exposure']],
+    note: 'For internal TLS, avoid trusting the entire public CA ecosystem when a dedicated internal root set will do.'
+  },
+  {
+    label: 'Federation', zone: 'cert-federation', visual: 'infrastructure', time: 'the least secure CA', minutes: 5,
+    eyebrow: 'Federation · 11', title: 'Every public CA can vouch for almost anyone.',
+    thesis: 'Web PKI relying parties generally trust every CA in their store to sign for every subscriber. The security of the federation is therefore only as good as its least secure member.',
+    takeaway: 'A CA you have never met may still be able to issue a certificate your browser accepts for your domain.',
+    points: [['CAA', 'Restrict which CAs may issue', 'DNS policy signal'], ['TRANSPARENCY', 'Put issued certificates in public logs', 'detect fraudulent issuance'], ['DEDICATED ROOTS', 'Separate internal trust stores', 'shrink the federation']],
+    note: 'Policy only works when relying parties enforce it. CAA and Certificate Transparency help; a narrow internal trust domain helps more for private systems.'
+  },
+  {
+    label: 'Intermediates and chains', zone: 'cert-chain', visual: 'chain', time: 'delegate issuance', minutes: 5,
+    eyebrow: 'Intermediates, Chains, and Bundling · 12', title: 'Keep root keys offline. Put intermediates to work.',
+    thesis: 'A broadly distributed root is hard to revoke, so its private key should be used rarely. It signs intermediate certificates; online intermediate CAs do the routine job of signing leaf certificates.',
+    takeaway: 'Leaf is signed by intermediate. Intermediate is signed by root. Root signs itself.',
+    points: [['ROOT CA', 'Broadly trusted and rarely used', 'offline trust anchor'], ['INTERMEDIATE CA', 'Online, automated, replaceable', 'issues subscribers'], ['LEAF CERTIFICATE', 'The service, person, or device', 'presented with intermediates']],
+    note: 'The server usually sends the leaf and intermediate bundle. The relying party already has the root. Ordering conventions are, annoyingly, not perfectly consistent.'
+  },
+  {
+    label: 'Certificate path validation', zone: 'cert-validation', visual: 'validation', time: 'authenticate the path', minutes: 5,
+    eyebrow: 'Certificate path validation · 13', title: 'A chain is evidence, not an automatic pass.',
+    thesis: 'The relying party builds a path from the leaf to a trusted root, then verifies signatures, expiration, names, constraints, key usage, policies, and—where supported—revocation.',
+    takeaway: 'Do not disable certificate path validation.',
+    points: [['SIGNATURES', 'Every issuer verifies the next certificate', 'chain intact'], ['NAME + TIME', 'SAN matches; validity window passes', 'right peer, right now'], ['CONSTRAINTS', 'CA status, key usage, policy, revocation', 'permitted purpose']],
+    note: 'Encryption without authentication is pretty worthless: a private conversation with no idea who is on the other side. Do not normalize curl -k as a fix.'
+  },
+  {
+    label: 'Key & Certificate Lifecycle', zone: 'cert-lifecycle', visual: 'issuance', time: 'from request to rotation', minutes: 4,
+    eyebrow: 'Key & Certificate Lifecycle · 14', title: 'Simple in outline. Intricate in operation.',
+    thesis: 'A subscriber generates a key pair, asks a CA for a certificate, proves the requested name, receives the signed certificate, uses it, replaces it before expiry, and sometimes needs to revoke it.',
+    takeaway: 'The hard problems hiding in the details are cache invalidation and naming things.',
+    points: [['CREATE', 'Name + local key pair', 'private key stays private'], ['ISSUE', 'CSR + identity proofing', 'CA signs the claim'], ['OPERATE', 'Use + renew + revoke', 'continuous lifecycle']],
+    note: 'This page is the lifecycle map. The next pages follow the article through every stage in order.'
+  },
+  {
+    label: 'Naming things', zone: 'cert-naming', visual: 'names', time: 'use SANs', minutes: 4,
+    eyebrow: 'Naming things · 15', title: 'Distinguished names were built for a phone book.',
+    thesis: 'X.509 inherited names like locality, state, country, organization, and common name from X.500. They do not map cleanly to the web. Modern certificates should bind useful names with Subject Alternative Names.',
+    takeaway: 'Use SANs: DNS, email, IP, or URI.',
+    points: [['DNS SAN', 'api.shop.example', 'machines and services'], ['EMAIL SAN', 'mike@example.com', 'people'], ['URI SAN', 'spiffe://prod/payments/api', 'workload identities']],
+    note: 'Certificates may carry multiple SANs and wildcards. That can be useful, but every extra name broadens what a compromised key can impersonate.'
+  },
+  {
+    label: 'Generating key pairs', zone: 'cert-key-generation', visual: 'keypair', time: 'keep it local', minutes: 4,
+    eyebrow: 'Generating key pairs · 16', title: 'Only the subscriber should ever know its private key.',
+    thesis: 'The central invariant of PKI is that the private key belongs only to the entity named by the certificate. The safest way to preserve that invariant is for the subscriber to generate its own key pair.',
+    takeaway: 'Definitely avoid transmitting a private key across the network.',
+    points: [['GENERATE', 'Create the pair at the workload', 'inside its security boundary'], ['PUBLIC HALF', 'Place this in the CSR', 'safe to distribute'], ['PRIVATE HALF', 'Keep local or hardware-backed', 'never export if possible']],
+    note: 'Modern deployments commonly use elliptic-curve keys; compatibility and policy matter more than chasing exotic key sizes.'
+  },
+  {
+    label: 'Issuance', zone: 'cert-issuance', visual: 'issuance', time: 'obtain the leaf', minutes: 4,
+    eyebrow: 'Issuance · 17', title: 'The CA must prove two different things.',
+    thesis: 'Before issuing a leaf certificate, the CA needs evidence that the requester controls the corresponding private key and that the requested name is actually the requester’s name.',
+    takeaway: 'Key possession and identity proofing are separate checks.',
+    points: [['PUBLIC KEY', 'Does the requester know the private half?', 'proof of possession'], ['NAME', 'Does this identity belong to the requester?', 'registration / proofing'], ['POLICY', 'Is the request allowed?', 'CA template and constraints']],
+    note: 'The CSR handles the first question. Registration and identity proofing handle the second.'
+  },
+  {
+    label: 'Certificate signing requests', zone: 'cert-csr', visual: 'issuance', time: 'PKCS#10', minutes: 4,
+    eyebrow: 'Certificate signing requests · 18', title: 'A CSR is signed by the requester.',
+    thesis: 'A certificate signing request is another ASN.1 structure containing a public key, requested name, and signature. It is self-signed with the matching private key so the CA can verify proof of possession.',
+    takeaway: 'A CSR can prove possession. It cannot prove the requested identity by itself.',
+    points: [['PUBLIC KEY', 'The key to put in the certificate', 'safe to send'], ['REQUESTED NAMES', 'The SANs the subscriber wants', 'subject to CA policy'], ['SIGNATURE', 'Created by the matching private key', 'tamper evidence + possession']],
+    note: 'CAs often ignore optional CSR details and apply their own certificate templates. The private key still never leaves the subscriber.'
+  },
+  {
+    label: 'Identity proofing', zone: 'cert-proofing', visual: 'issuance', time: 'who are you?', minutes: 5,
+    eyebrow: 'Identity proofing · 19', title: 'How does the CA authenticate you before you have a certificate?',
+    thesis: 'It depends. Web PKI usually proves control of a domain through email, HTTP, or DNS challenges. Internal PKI can bootstrap from infrastructure that already knows what it is provisioning.',
+    takeaway: 'A DV certificate proves control of a validation channel at a point in time—not moral ownership.',
+    points: [['ACME', 'HTTP or DNS challenge', 'automated domain control'], ['ORGANIZATION PROOFING', 'Legal identity and records', 'OV / EV processes'], ['INTERNAL ATTESTATION', 'Cloud, orchestrator, or device identity', 'trusted provisioning context']],
+    note: 'If Kubernetes, Ansible, or a cloud platform is trusted to start the right code in the right place, it already has identity evidence your CA can leverage.'
+  },
+  {
+    label: 'Expiration', zone: 'cert-expiration', visual: 'expiry', time: 'credentials die', minutes: 5,
+    eyebrow: 'Expiration · 20', title: 'As we approach forever, compromise approaches certainty.',
+    thesis: 'Certificates carry a not-before and not-after time because relying parties usually verify them without calling a central authority. Without an expiry, a stolen credential could remain trusted forever.',
+    takeaway: 'Synchronize your clocks. Delete signing keys when they are no longer needed.',
+    points: [['NOT BEFORE', 'The certificate is not valid yet', 'clock sync matters'], ['VALID NOW', 'The relying party may accept it', 'all other checks still apply'], ['NOT AFTER', 'The relying party must reject it', 'credential expires']],
+    note: 'Signing and encryption keys have different retention needs. A key still needed to decrypt old data cannot simply be deleted when its signing certificate expires.'
+  },
+  {
+    label: 'Renewal', zone: 'cert-renewal', visual: 'expiry', time: 'replace before expiry', minutes: 4,
+    eyebrow: 'Renewal · 21', title: 'There is no magic “extend” button.',
+    thesis: 'Renewal means obtaining and deploying a new certificate before the old one expires. For internal PKI, the current certificate can often authenticate the renewal request and make the whole process automatic.',
+    takeaway: 'If something hurts, do it more. Use short-lived certificates and automate the problem away.',
+    points: [['ISSUE NEW', 'Authenticate and request another certificate', 'often with a fresh key'], ['DEPLOY', 'Reload without dropping connections', 'rotate early'], ['OBSERVE', 'Monitor expiry and renewal health', 'avoid surprise outages']],
+    note: 'Short lifetimes turn renewal from an annual emergency into ordinary plumbing. That pressure is healthy only if the automation is reliable.'
+  },
+  {
+    label: 'Revocation', zone: 'cert-revocation', visual: 'revocation', time: 'stop trusting early', minutes: 6,
+    eyebrow: 'Revocation · 22', title: 'Revocation is a big mess.',
+    thesis: 'A CA can declare a certificate invalid before expiry, but every relying party must discover and enforce that decision. CRLs and OCSP introduce caching, latency, privacy, availability, and fail-open problems.',
+    takeaway: 'For internal PKI, passive revocation with short-lived certificates is often the sane answer.',
+    points: [['CRL', 'A signed list of revoked serial numbers', 'large, cached, sometimes stale'], ['OCSP', 'Ask a responder about one certificate', 'privacy + availability'], ['PASSIVE REVOCATION', 'Deny renewal and wait for expiry', 'simple bounded exposure']],
+    note: 'Very short lifetimes increase load on the online CA and make clock synchronization critical. “How short?” depends on the threat model.'
+  },
+  {
+    label: 'Using certificates', zone: 'cert-using', visual: 'using', time: 'TLS is the easy part', minutes: 4,
+    eyebrow: 'Using certificates · 23', title: 'Actually using certificates is really easy.',
+    thesis: 'Configure a relying party with the root certificates it should trust. Configure a subscriber with its certificate chain and private key. In mutual TLS, each entity has both sets of configuration.',
+    takeaway: 'Verifier: roots. Presenter: certificate chain + private key.',
+    points: [['RELYING PARTY', 'Trust the intended root set', '--cacert root.pem'], ['SUBSCRIBER', 'Present leaf + intermediate chain', 'server.crt + server.key'], ['MUTUAL TLS', 'Both peers present and validate', 'two-way identity']],
+    note: 'Most TLS clients and servers take the same parameters. They usually punt on how certificates appear, rotate, reload, and remain observable—that lifecycle is the real work.'
+  },
+  {
+    label: 'In Summary', zone: 'cert-summary', visual: 'summary', time: 'the field guide', minutes: 4,
+    eyebrow: 'In Summary · 24', title: 'Bind names to public keys.',
+    thesis: 'Public key cryptography lets computers see across networks. Certificates teach them which public key belongs to which name. CAs vouch for the binding, and relying parties decide whether the evidence deserves trust.',
+    takeaway: 'The rest is just details—important, annoying, operable details.',
+    points: [['01', 'Use SANs for useful names', 'name'], ['02', 'Keep private keys private', 'key'], ['03', 'Use internal PKI for internal stuff', 'scope'], ['04', 'Present complete chains', 'bundle'], ['05', 'Never disable path validation', 'verify'], ['06', 'Issue short and renew automatically', 'operate']],
+    note: 'Close on the original one-sentence summary. Ask the room to identify one name, one public key, one issuer, one trust store, and one renewal path in their own system.'
   }
 ];
 
 const scenes = [
-  ...foundations.map(item => ({ ...item, type: 'foundation', section: 'journey' })),
-  { type: 'pki-bridge', section: 'journey', label: 'Beyond the handshake', zone: 'pki-to-app', time: 'connection established', minutes: 2, note: 'Use this as the handoff from certificates to application security. A certificate authenticates a name and TLS protects the channel. Neither proves that the person intended this origin, that local code is honest, or that the resulting request is authorized and valid.' },
+  ...certificateChapters.map(item => ({ ...item, type: 'certificate-chapter', section: 'certificates' })),
+  { type: 'pki-bridge', section: 'certificates', label: 'Beyond the handshake', zone: 'pki-to-app', time: 'connection established', minutes: 2, note: 'Close the certificate session here. A certificate authenticates a name and TLS protects the channel. Neither proves that the person intended this origin, that local code is honest, or that the resulting request is authorized and valid. The button starts the separate Request Under Fire session.' },
   { type: 'opening', section: 'journey', label: 'Case open', zone: 'open', time: 'before the click', minutes: 1.5, note: 'Now open the concrete case: “The connection is protected. When they click Pay, whose code receives their intent?” Let the audience choose which compromise path to trace first.' },
   { type: 'recon', section: 'journey', label: 'Recon workbench', zone: 'recon', time: 'T − 24 h', minutes: 4, note: 'Let the room choose commands. Each result is simulated and intentionally harmless: the point is how small public clues compose into an attack plan. After three clues, ask which exposure they would fix first—and which one is merely information, not a vulnerability by itself.' },
   ...journeyScenes.map(item => ({ ...item, section: 'journey' })),
@@ -543,13 +679,9 @@ const scenes = [
   { type: 'appendix', section: 'reflections', label: 'Future deep dives', zone: 'appendix', time: 'placeholder', minutes: 1, note: 'This is a roadmap placeholder only. Use it to acknowledge important topics that deserve their own optional modules rather than rushing through them.' },
   { type: 'closing', section: 'reflections', label: 'Case closed', zone: 'closed', time: 'complete', minutes: 2, note: 'Review the six questions. Ask each person to select one production request this week and draw each boundary and verification step.' }
 ];
+const certificateEndIndex = scenes.findIndex(item => item.type === 'pki-bridge');
+const requestStartIndex = scenes.findIndex(item => item.type === 'opening');
 const reflectionStartIndex = scenes.findIndex(item => item.type === 'bridge');
-
-function formatClock(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
 
 function LensBadges({ lenses = [] }) {
   return <div className="lens-badges" role="group" aria-label="OWASP categories">{lenses.map(code => <span key={code}>{code} <small>{owasp[code][0]}</small></span>)}</div>;
@@ -1341,75 +1473,99 @@ function SupplyChainVisual() {
   return <div className="supply-visual"><div className="supply-pipeline">{stages.map(([title, control], index) => <motion.div key={title} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .25, delay: reduceMotion ? 0 : index * .12 }}><span>0{index + 1}</span><strong>{title}</strong><small>{control}</small>{index < stages.length - 1 && <i>→</i>}</motion.div>)}</div><div className="supply-evidence"><div><span>ARTIFACT IDENTITY</span><code>sha256:9b71…e2c4</code></div><div><span>PROVENANCE</span><code>repo@a813c2 · workflow/build.yml</code></div><div><span>DEPLOY POLICY</span><code>signature ✓ · builder allowed ✓</code></div></div><p><strong>Lockfiles answer “which version?”</strong> Signatures and provenance help answer “who built this artifact from what?” An SBOM answers “what is inside?” Runtime isolation limits what compromised code can reach.</p></div>;
 }
 
-function PkiFoundationVisual({ kind }) {
+function CertificateExhibit({ scene }) {
   const reduceMotion = useReducedMotion();
   const enter = index => ({
-    initial: reduceMotion ? false : { opacity: 0, transform: 'translateY(14px)' },
-    animate: { opacity: 1, transform: 'translateY(0)' },
-    transition: { duration: .38, delay: reduceMotion ? 0 : index * .11, ease: [.23, 1, .32, 1] }
+    initial: reduceMotion ? false : { opacity: 0, transform: 'translateY(12px)' },
+    animate: { opacity: 1, transform: 'translateY(0px)' },
+    transition: { duration: .38, delay: reduceMotion ? 0 : .12 + index * .07, ease: [.23, 1, .32, 1] }
   });
 
-  if (kind === 'goal') return (
-    <div className="pki-visual pki-goal-visual" role="img" aria-label="A name being cryptographically bound to a public key">
-      <motion.div className="pki-goal-side" {...enter(0)}><span>NAME</span><strong>api.shop.example</strong><small>the identifier we understand</small></motion.div>
-      <div className="pki-binding"><motion.i initial={reduceMotion ? false : { transform: 'scaleX(0)' }} animate={{ transform: 'scaleX(1)' }} transition={{ duration: .8, ease: [.77, 0, .175, 1] }} /><b>signed binding</b><em>↔</em></div>
-      <motion.div className="pki-goal-side" {...enter(2)}><span>PUBLIC KEY</span><strong>EC P-256 · 03:A7…</strong><small>the cryptographic identity we can verify</small></motion.div>
+  const cards = scene.points.map(([label, title, detail], index) => (
+    <motion.article key={`${label}-${title}`} {...enter(index)}>
+      <span>{label}</span><strong>{title}</strong><code>{detail}</code>
+    </motion.article>
+  ));
+
+  if (scene.visual === 'certificate') return (
+    <div className="cert-exhibit exhibit-certificate" aria-label="Anatomy of a certificate">
+      <motion.div className="cert-passport" {...enter(0)}>
+        <header><span>X.509 · LEAF CERTIFICATE</span><b>VALID</b></header>
+        <div className="cert-seal">N</div>
+        <h3>api.shop.example</h3>
+        <dl><div><dt>PUBLIC KEY</dt><dd>EC P-256 · 03:A7:91…</dd></div><div><dt>VALIDITY</dt><dd>24 hours</dd></div><div><dt>ISSUER</dt><dd>Northstar Intermediate CA</dd></div></dl>
+        <footer>✦ issuer signature verified</footer>
+      </motion.div>
+      <p className="exhibit-caption">Public document <b>≠</b> private key</p>
     </div>
   );
 
-  if (kind === 'identity') {
-    const steps = [['ENTITY', 'A thing that exists', 'service / person / device'], ['NAME', 'A unique reference', 'api.shop.example'], ['CLAIM', '“That name is mine”', 'presented across a network'], ['AUTHENTICATE', 'Check the claim', 'true—or not']];
-    return <div className="pki-visual pki-identity-visual" role="img" aria-label="The journey from an entity to an authenticated name claim">{steps.map(([label, title, detail], index) => <motion.div className="pki-step" key={label} {...enter(index)}><span>0{index + 1} · {label}</span><strong>{title}</strong><small>{detail}</small>{index < steps.length - 1 && <i>→</i>}</motion.div>)}</div>;
-  }
-
-  if (kind === 'signatures') return (
-    <div className="pki-visual pki-compare" role="img" aria-label="Comparison of a shared-secret MAC and an asymmetric digital signature">
-      <motion.div className="pki-compare-lane" {...enter(0)}><span>MAC · SHARED SECRET</span><div><b>sender</b><code>secret + message</code><i>→ HMAC →</i><strong>recipient<br /><small>same secret</small></strong></div><p>Both sides can create the same proof. Useful—but authorship is shared.</p></motion.div>
-      <motion.div className="pki-compare-lane is-signature" {...enter(1)}><span>SIGNATURE · KEY PAIR</span><div><b>private key</b><code>sign(message)</code><i>→ signature →</i><strong>public key<br /><small>verify only</small></strong></div><p>One side signs. Everyone else can verify without gaining the power to forge.</p></motion.div>
+  if (scene.visual === 'formats') return (
+    <div className="cert-exhibit exhibit-formats" aria-label="Certificate format layers">
+      <div className="format-sheets">{cards}</div>
+      <motion.pre {...enter(4)}>-----BEGIN CERTIFICATE-----{`\n`}MIIBwzCCAWqgAwIBAgIR…{`\n`}-----END CERTIFICATE-----</motion.pre>
     </div>
   );
 
-  if (kind === 'vision') {
-    const steps = [['RELYING PARTY', 'Generate fresh random challenge', '7F 2A 91 D4…'], ['PRIVATE KEY HOLDER', 'Sign the challenge', 'private key never leaves'], ['PUBLIC KEY', 'Verify the signature', 'identity seen across network']];
-    return <div className="pki-visual pki-vision-visual" role="img" aria-label="A challenge response proves possession of a private key">{steps.map(([label, title, detail], index) => <motion.div className="pki-step" key={label} {...enter(index)}><span>{label}</span><strong>{title}</strong><code>{detail}</code>{index < steps.length - 1 && <i>→</i>}</motion.div>)}<motion.div className="pki-packet" initial={reduceMotion ? false : { transform: 'translateX(-160px)', opacity: 0 }} animate={reduceMotion ? { transform: 'translateX(0)', opacity: 1 } : { transform: 'translateX(160px)', opacity: [0, 1, 1, 0] }} transition={reduceMotion ? { duration: 0 } : { duration: 2.4, repeat: Infinity, ease: 'linear' }}>0101</motion.div></div>;
-  }
-
-  if (kind === 'certificate') return (
-    <div className="pki-visual pki-certificate-visual" role="img" aria-label="A certificate authority signs Bob's name and public key">
-      <motion.div className="pki-ca" {...enter(0)}><span>ISSUER · CA</span><strong>Some Issuer</strong><small>trusted public key already known</small><i>signs →</i></motion.div>
-      <motion.div className="pki-cert-card" {...enter(1)}><div><span>X.509 CERTIFICATE</span><b>VALID · 24 HOURS</b></div><h3>Bob</h3><p><small>SUBJECT ALTERNATIVE NAME</small>bob.internal.example</p><p><small>PUBLIC KEY</small>EC P-256 · 01:23:42…</p><footer><i>✦</i><strong>Signed by Some Issuer</strong></footer></motion.div>
-      <motion.div className="pki-rp" {...enter(2)}><span>RELYING PARTY</span><strong>Verify issuer’s signature</strong><small>then trust the binding</small></motion.div>
+  if (scene.visual === 'chain') return (
+    <div className="cert-exhibit exhibit-chain" aria-label="Leaf, intermediate, and root certificate chain">
+      {scene.points.slice().reverse().map(([label, title, detail], index) => <motion.article key={label} {...enter(index)}><i>{index === 0 ? 'presented first' : index === 2 ? 'already trusted' : 'issuer verified'}</i><span>{label}</span><strong>{title}</strong><code>{detail}</code></motion.article>)}
     </div>
   );
 
-  if (kind === 'formats') {
-    const layers = [['X.509', 'the certificate data structure'], ['ASN.1', 'the language that defines it'], ['DER', 'canonical binary encoding'], ['PEM', 'Base64 + BEGIN / END labels']];
-    return <div className="pki-visual pki-formats-visual" role="img" aria-label="Certificate representation layers from X.509 to PEM"><div className="pki-format-stack">{layers.map(([label, detail], index) => <motion.div key={label} {...enter(index)}><span>{label}</span><strong>{detail}</strong></motion.div>)}</div><motion.div className="pki-pem" {...enter(4)}><span>WHAT YOU USUALLY SEE</span><code>-----BEGIN CERTIFICATE-----<br />MIIBwzCCAWqgAwIBAgIRAIi5…<br />…SUP20gB1kwCgYIKoZIzj0E<br />-----END CERTIFICATE-----</code><small>PKCS#7: chain · PKCS#12: chain + private key</small></motion.div></div>;
-  }
+  if (scene.visual === 'validation') return (
+    <div className="cert-exhibit exhibit-validation" aria-label="Certificate path validation checklist">
+      <div className="validation-terminal"><span>$ connect api.shop.example</span>{cards}<footer><b>ACCEPT</b> · authenticated encrypted channel</footer></div>
+      <div className="validation-warning"><code>curl -k</code><strong>turns authentication off</strong></div>
+    </div>
+  );
 
-  if (kind === 'trust') {
-    const chain = [['ROOT', 'Trust anchor', 'preinstalled locally'], ['INTERMEDIATE', 'Issuing CA', 'signed by root'], ['LEAF', 'api.shop.example', 'signed by intermediate'], ['RELYING PARTY', 'Browser / client', 'validates the path']];
-    return <div className="pki-visual pki-trust-visual" role="img" aria-label="Certificate chain from a trusted root through an intermediate and leaf to a relying party">{chain.map(([label, title, detail], index) => <motion.div className={`pki-chain-node node-${index}`} key={label} {...enter(index)}><span>{label}</span><strong>{title}</strong><small>{detail}</small>{index < chain.length - 1 && <i>{index < 2 ? 'signs →' : 'presents →'}</i>}</motion.div>)}<div className="pki-validation"><span>PATH VALIDATION</span><b>hostname ✓</b><b>signatures ✓</b><b>time ✓</b><b>constraints ✓</b></div></div>;
-  }
+  if (scene.visual === 'expiry') return (
+    <div className="cert-exhibit exhibit-expiry" aria-label="Certificate validity and renewal timeline">
+      <div className="expiry-track"><span>NOT BEFORE</span><i><b /></i><span>NOT AFTER</span><em>ROTATE HERE</em></div>
+      <div className="cert-card-grid">{cards}</div>
+    </div>
+  );
 
-  const steps = [['GENERATE', 'key pair stays here'], ['REQUEST', 'signed CSR'], ['PROVE', 'control of name'], ['ISSUE', 'CA signs'], ['USE', 'TLS / mTLS'], ['RENEW', 'replace before expiry']];
-  return <div className="pki-visual pki-lifecycle-visual" role="img" aria-label="Certificate lifecycle from local key generation through automated renewal"><div className="pki-cycle">{steps.map(([label, detail], index) => <motion.div className="pki-cycle-step" key={label} {...enter(index)}><span>0{index + 1}</span><strong>{label}</strong><small>{detail}</small>{index < steps.length - 1 && <i>→</i>}</motion.div>)}</div><div className="pki-lifetime"><span>NOT BEFORE</span><i><b /></i><span>NOT AFTER</span><strong>short lifetime · automatic rotation · synchronized clocks</strong></div></div>;
+  if (scene.visual === 'scope') return (
+    <div className="cert-exhibit exhibit-scope" aria-label="Comparison between Web PKI and internal PKI">
+      <section><span>OPEN INTERNET</span><strong>Web PKI</strong><p>Universal browser trust<br />Public DNS identities</p></section>
+      <div><b>VS</b><small>different trust domains</small></div>
+      <section><span>YOUR SYSTEM</span><strong>Internal PKI</strong><p>Private workload identity<br />Your issuance policy</p></section>
+    </div>
+  );
+
+  if (scene.visual === 'proof') return (
+    <div className="cert-exhibit exhibit-proof" aria-label="MAC and signature authority comparison">
+      <section><span>MAC · SHARED</span><strong>Secret</strong><div><b>CREATE</b><b>VERIFY</b></div><p>Both parties hold both powers.</p></section>
+      <section><span>SIGNATURE · ASYMMETRIC</span><strong>Key pair</strong><div><b>PRIVATE · SIGN</b><b>PUBLIC · VERIFY</b></div><p>Verification does not grant forgery.</p></section>
+    </div>
+  );
+
+  if (scene.visual === 'keypair' || scene.visual === 'issuance') return (
+    <div className={`cert-exhibit exhibit-sequence exhibit-${scene.visual}`} aria-label={`${scene.title} sequence`}>
+      {cards}
+    </div>
+  );
+
+  return <div className={`cert-exhibit cert-card-grid exhibit-${scene.visual}`} aria-label={`${scene.title} key ideas`}>{cards}</div>;
 }
 
-function FoundationScene({ scene }) {
+function CertificateChapter({ scene }) {
+  const reduceMotion = useReducedMotion();
   return (
-    <section className={`scene-shell foundation-scene foundation-scene-${scene.zone}`} aria-labelledby={`foundation-${scene.zone}`}>
-      <div className="foundation-heading">
+    <section className={`scene-shell certificate-chapter chapter-${scene.visual}`} aria-labelledby={`chapter-${scene.zone}`}>
+      <div className="chapter-copy">
         <div className="scene-index"><span>{scene.eyebrow}</span><strong>{scene.time}</strong></div>
-        <h2 id={`foundation-${scene.zone}`}>{scene.title}</h2>
+        <motion.h2 id={`chapter-${scene.zone}`} initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(14px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }} transition={{ duration: .48, ease: [.23, 1, .32, 1] }}>{scene.title}</motion.h2>
         <p className="scene-thesis">{scene.thesis}</p>
+        <div className="chapter-takeaway"><span>KEEP THIS</span><strong>{scene.takeaway}</strong></div>
       </div>
-      <PkiFoundationVisual kind={scene.visual} />
-      <div className="foundation-footer"><span>{scene.footer[0]}</span><strong>{scene.footer[1]}</strong><a href="https://smallstep.com/blog/everything-pki/" target="_blank" rel="noreferrer">Adapted from Smallstep ↗</a></div>
+      <CertificateExhibit scene={scene} />
+      <footer className="chapter-footer"><span>{scene.label}</span><a href="https://smallstep.com/blog/everything-pki/" target="_blank" rel="noreferrer">Based on Everything PKI by Smallstep ↗</a></footer>
     </section>
   );
 }
-
 function PkiToAppBridge({ next }) {
   const reduceMotion = useReducedMotion();
   const checks = [
@@ -1424,7 +1580,7 @@ function PkiToAppBridge({ next }) {
         <p className="scene-kicker">The handshake is done</p>
         <h2 id="pki-app-bridge-title">The certificate got us to a named server. Now what?</h2>
         <p className="scene-thesis">A protected connection can still reach the wrong origin, carry a harmful request, or run beside hostile local code. TLS authenticates the endpoint—not the person’s intent or the application’s decisions.</p>
-        <button className="primary-action" type="button" onClick={next}>Follow the request <span aria-hidden="true">→</span></button>
+        <button className="primary-action" type="button" onClick={next}>Start Request Under Fire <span aria-hidden="true">→</span></button>
       </div>
       <div className="pki-app-handoff" role="img" aria-label="A certificate establishes server identity and TLS protects the channel before application checks begin">
         <div className="handoff-route" aria-hidden="true"><span>BROWSER</span><i /><b>TLS</b><i /><span>SERVER</span></div>
@@ -1672,28 +1828,24 @@ export default function App() {
   });
   const [phase, setPhase] = useState(0);
   const [branch, setBranch] = useState('phishing');
-  const [showNotes, setShowNotes] = useState(false);
-  const [highContrast, setHighContrast] = useState(false);
-  const [timerRunning, setTimerRunning] = useState(false);
-  const [elapsed, setElapsed] = useState(0);
   const [inputMode, setInputMode] = useState('pointer');
   const [direction, setDirection] = useState(1);
   const [sceneBrowserOpen, setSceneBrowserOpen] = useState(false);
   const scene = scenes[sceneIndex];
   const currentSection = scene.section ?? (sceneIndex < reflectionStartIndex ? 'journey' : 'reflections');
-
-  const totalMinutes = useMemo(() => scenes.reduce((sum, item) => sum + item.minutes, 0), []);
+  const currentSession = sceneIndex <= certificateEndIndex ? 'certificates' : 'request';
+  const sessionStartIndex = currentSession === 'certificates' ? 0 : requestStartIndex;
+  const sessionEndIndex = currentSession === 'certificates' ? certificateEndIndex : scenes.length - 1;
+  const sessionScenes = scenes.slice(sessionStartIndex, sessionEndIndex + 1);
+  const sessionSceneIndex = sceneIndex - sessionStartIndex;
 
   useEffect(() => {
     document.body.dataset.input = inputMode;
-    document.body.classList.toggle('high-contrast', highContrast);
-  }, [inputMode, highContrast]);
+  }, [inputMode]);
 
   useEffect(() => {
-    if (!timerRunning) return undefined;
-    const timer = window.setInterval(() => setElapsed(value => value + 1), 1000);
-    return () => window.clearInterval(timer);
-  }, [timerRunning]);
+    document.body.dataset.session = currentSession;
+  }, [currentSession]);
 
   useEffect(() => {
     const onHash = () => {
@@ -1719,44 +1871,45 @@ export default function App() {
     stageRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }
 
+  function startSession(index) {
+    goTo(index);
+  }
+
   useEffect(() => {
     function onKeyDown(event) {
       if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]') || sceneBrowserOpen) return;
       if (['INPUT', 'TEXTAREA', 'BUTTON', 'A'].includes(document.activeElement?.tagName)) return;
-      if (event.key === 'ArrowRight' || event.key === 'PageDown') { event.preventDefault(); goTo(sceneIndex + 1, 'keyboard'); }
-      if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); goTo(sceneIndex - 1, 'keyboard'); }
+      if (event.key === 'ArrowRight' || event.key === 'PageDown') { event.preventDefault(); goTo(Math.min(sceneIndex + 1, sessionEndIndex), 'keyboard'); }
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') { event.preventDefault(); goTo(Math.max(sceneIndex - 1, sessionStartIndex), 'keyboard'); }
       if (event.key === ' ') {
         event.preventDefault();
         if (scene.type === 'checkpoint' && phase < 2) { setInputMode('keyboard'); setPhase(value => value + 1); }
-        else goTo(sceneIndex + 1, 'keyboard');
+        else goTo(Math.min(sceneIndex + 1, sessionEndIndex), 'keyboard');
       }
       if (['1', '2', '3'].includes(event.key) && scene.type === 'checkpoint') { setInputMode('keyboard'); setPhase(Number(event.key) - 1); }
-      if (event.key.toLowerCase() === 'n') setShowNotes(value => !value);
       if (event.key.toLowerCase() === 'o') lensRef.current?.showModal();
-      if (event.key === 'Home') goTo(0, 'keyboard');
-      if (event.key === 'End') goTo(scenes.length - 1, 'keyboard');
+      if (event.key === 'Home') goTo(sessionStartIndex, 'keyboard');
+      if (event.key === 'End') goTo(sessionEndIndex, 'keyboard');
     }
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [sceneIndex, phase, scene.type, sceneBrowserOpen]);
+  }, [sceneIndex, phase, scene.type, sceneBrowserOpen, sessionStartIndex, sessionEndIndex]);
 
   return (
     <>
       <a className="skip-link" href="#presentation">Skip to presentation</a>
       <header className="topbar">
-        <button className="brand" type="button" onClick={() => goTo(0)} aria-label="Go to beginning">
-          <span className="brand-orbit" aria-hidden="true"><i /><i /></span><span>REQUEST <em>UNDER FIRE</em></span>
+        <button className="brand" type="button" onClick={() => goTo(sessionStartIndex)} aria-label="Go to beginning of current session">
+          <span className="brand-orbit" aria-hidden="true"><i /><i /></span>
+          <span>{currentSession === 'certificates' ? <>CERTIFICATES <em>&amp; PKI</em></> : <>REQUEST <em>UNDER FIRE</em></>}</span>
         </button>
         <div className="live-clock" aria-live="polite"><span>{scene.zone.toUpperCase()}</span><strong>{scene.time === 'complete' || scene.time === 'replay' ? scene.time : `t = ${scene.time}`}</strong></div>
         <div className="top-actions">
-          <div className="section-switcher" role="group" aria-label="Presentation sections">
-            <button type="button" className={currentSection === 'journey' ? 'is-selected' : ''} onClick={() => goTo(0)}>Journey</button>
-            <button type="button" className={currentSection === 'reflections' ? 'is-selected' : ''} onClick={() => goTo(reflectionStartIndex)}>Reflections</button>
+          <div className="section-switcher" role="group" aria-label="Presentation sessions">
+            <button type="button" className={currentSession === 'certificates' ? 'is-selected' : ''} onClick={() => startSession(0)}>Certificates &amp; PKI</button>
+            <button type="button" className={currentSession === 'request' ? 'is-selected' : ''} onClick={() => startSession(requestStartIndex)}>Request Under Fire</button>
           </div>
-          <button className="timer-button" type="button" onClick={() => setTimerRunning(value => !value)} aria-label={`${timerRunning ? 'Pause' : 'Start'} presentation timer`}><span>{timerRunning ? 'LIVE' : 'PACE'}</span>{formatClock(elapsed)} <i>/ {Math.round(totalMinutes)}:00</i></button>
           <button className="lens-button" type="button" onClick={() => lensRef.current?.showModal()}>OWASP <span>REFERENCE</span></button>
-          <button className="icon-button" type="button" onClick={() => setShowNotes(value => !value)} aria-label="Toggle speaker notes" aria-pressed={showNotes}>N</button>
-          <button className="icon-button" type="button" onClick={() => setHighContrast(value => !value)} aria-label="Toggle high contrast" aria-pressed={highContrast}>◐</button>
         </div>
       </header>
 
@@ -1767,10 +1920,10 @@ export default function App() {
             animate={{ opacity: 1, transform: 'translateX(0px) scale(1)' }}
             exit={reduceMotion || inputMode === 'keyboard' ? { opacity: 0 } : { opacity: 0, transform: `translateX(${direction * -20}px) scale(.998)` }}
             transition={{ type: 'spring', visualDuration: .34, bounce: .04 }}>
-            {scene.type !== 'opening' && <h1 className="sr-only">Request Under Fire: {scene.label}</h1>}
+            {scene.type !== 'opening' && <h1 className="sr-only">{currentSession === 'certificates' ? 'Certificates & PKI' : 'Request Under Fire'}: {scene.label}</h1>}
             {scene.type === 'opening' && <Opening next={() => goTo(sceneIndex + 1)} branch={branch} setBranch={setBranch} />}
-            {scene.type === 'foundation' && <FoundationScene scene={scene} />}
-            {scene.type === 'pki-bridge' && <PkiToAppBridge next={() => goTo(sceneIndex + 1)} />}
+            {scene.type === 'certificate-chapter' && <CertificateChapter scene={scene} />}
+            {scene.type === 'pki-bridge' && <PkiToAppBridge next={() => startSession(requestStartIndex)} />}
             {scene.type === 'recon' && <ReconWorkbench next={() => goTo(sceneIndex + 1)} />}
             {scene.type === 'journey' && <JourneyScene scene={scene} branch={branch} setBranch={setBranch} />}
             {scene.type === 'bridge' && <ReflectionBridge branch={branch} next={() => goTo(sceneIndex + 1)} />}
@@ -1778,7 +1931,7 @@ export default function App() {
             {scene.type === 'quiz' && <FieldTest />}
             {scene.type === 'lifecycle' && <LifecycleScene />}
             {scene.type === 'appendix' && <AppendixPlaceholder />}
-            {scene.type === 'closing' && <Closing restart={() => goTo(0)} openLens={() => lensRef.current?.showModal()} />}
+            {scene.type === 'closing' && <Closing restart={() => goTo(requestStartIndex)} openLens={() => lensRef.current?.showModal()} />}
           </motion.div>
         </AnimatePresence>
       </main>
@@ -1786,22 +1939,24 @@ export default function App() {
       <SceneBrowser open={sceneBrowserOpen} currentIndex={sceneIndex} onClose={() => setSceneBrowserOpen(false)} onSelect={goTo} />
 
       <nav className="deck-nav" aria-label="Presentation scenes">
-        <button className="nav-arrow" type="button" onClick={() => goTo(sceneIndex - 1)} disabled={sceneIndex === 0} aria-label="Previous scene">←</button>
+        <button className="nav-arrow" type="button" onClick={() => goTo(sceneIndex - 1)} disabled={sceneIndex === sessionStartIndex} aria-label="Previous scene">←</button>
         <div className="nav-center">
           <button className="nav-meta" type="button" aria-expanded={sceneBrowserOpen} onClick={() => setSceneBrowserOpen(value => !value)}>
-            <span>{currentSection} · {scene.label} <i>⌃ scene map</i></span><strong>{scene.minutes} MIN · {String(sceneIndex + 1).padStart(2, '0')} / {String(scenes.length).padStart(2, '0')}</strong>
+            <span>{currentSection} · {scene.label} <i>⌃ scene map</i></span><strong>{scene.minutes} MIN · {String(sessionSceneIndex + 1).padStart(2, '0')} / {String(sessionScenes.length).padStart(2, '0')}</strong>
           </button>
-          <div className="progress-track" style={{ '--scene-count': scenes.length }} role="tablist" aria-label="Presentation scenes">
-            <i className="progress-fill" style={{ transform: `scaleX(${sceneIndex / (scenes.length - 1)})` }} aria-hidden="true" />
-            {scenes.map((item, index) => <button type="button" role="tab" aria-selected={sceneIndex === index} aria-label={`Scene ${index + 1}: ${item.label}`} className={index === sceneIndex ? 'is-current' : index < sceneIndex ? 'is-past' : ''} onClick={() => goTo(index)} key={`${item.label}-${index}`}><i />{sceneIndex === index && <motion.span className="progress-packet" layoutId="deck-playhead" transition={reduceMotion || inputMode === 'keyboard' ? { duration: 0 } : { type: 'spring', duration: .5, bounce: .1 }} aria-hidden="true" />}</button>)}
+          <div className="progress-track" style={{ '--scene-count': sessionScenes.length }} role="tablist" aria-label={`${currentSession === 'certificates' ? 'Certificates and PKI' : 'Request Under Fire'} session scenes`}>
+            <i className="progress-fill" style={{ transform: `scaleX(${sessionScenes.length === 1 ? 1 : sessionSceneIndex / (sessionScenes.length - 1)})` }} aria-hidden="true" />
+            {sessionScenes.map((item, index) => {
+              const globalIndex = sessionStartIndex + index;
+              return <button type="button" role="tab" aria-selected={sceneIndex === globalIndex} aria-label={`Scene ${index + 1}: ${item.label}`} className={index === sessionSceneIndex ? 'is-current' : index < sessionSceneIndex ? 'is-past' : ''} onClick={() => goTo(globalIndex)} key={`${item.label}-${globalIndex}`}><i />{index === sessionSceneIndex && <motion.span className="progress-packet" layoutId="deck-playhead" transition={reduceMotion || inputMode === 'keyboard' ? { duration: 0 } : { type: 'spring', duration: .5, bounce: .1 }} aria-hidden="true" />}</button>;
+            })}
           </div>
-          <div className="nav-hint"><span>SPACE · reveal</span><span>← → · navigate</span><span>N · notes</span></div>
+          <div className="nav-hint"><span>SPACE · reveal</span><span>← → · navigate</span></div>
         </div>
-        <button className="nav-arrow" type="button" onClick={() => goTo(sceneIndex + 1)} disabled={sceneIndex === scenes.length - 1} aria-label="Next scene">→</button>
+        <button className="nav-arrow" type="button" onClick={() => goTo(sceneIndex + 1)} disabled={sceneIndex === sessionEndIndex} aria-label="Next scene">→</button>
       </nav>
 
-      {showNotes && <aside className="speaker-notes" aria-label="Speaker notes"><span>SPEAKER NOTE · {scene.minutes} MIN</span><p>{scene.note}</p></aside>}
-      <div className="scene-announcer sr-only" aria-live="polite">Scene {sceneIndex + 1} of {scenes.length}: {scene.label}</div>
+      <div className="scene-announcer sr-only" aria-live="polite">Scene {sessionSceneIndex + 1} of {sessionScenes.length} in the current session: {scene.label}</div>
       <LensDialog dialogRef={lensRef} />
     </>
   );
