@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { createPortal } from 'react-dom';
 import './styles.css';
@@ -489,12 +489,12 @@ const certificateChapters = [
     note: 'A single entity can be both subscriber and relying party. That is exactly what happens in mutual TLS.'
   },
   {
-    label: 'MACs and signatures', zone: 'cert-signatures', visual: 'proof', time: 'authenticate stuff', minutes: 4,
-    eyebrow: 'MACs and signatures · 03', title: 'MACs authenticate stuff.',
-    thesis: 'Feed a shared secret and a message through a hash function and you get a message authentication code. A recipient with the same secret can reproduce the MAC and confirm both who sent the message and that it was not modified.',
-    takeaway: 'Do not invent your own MAC algorithm. Use HMAC.',
-    points: [['MAC', 'Sender and recipient share a secret', 'both can create proof'], ['SIGNATURE', 'Only the private-key holder signs', 'authorship is controlled'], ['VERIFY', 'The public key checks the signature', 'verification cannot forge']],
-    note: 'MACs are prologue. The real story starts with signatures: similar purpose, but a radically different distribution of authority.'
+    label: 'MACs and signatures', zone: 'cert-signatures', visual: 'proof', time: 'authenticate stuff', minutes: 5,
+    eyebrow: 'MACs and signatures · 03', title: 'Authenticate the message—and its maker.',
+    thesis: 'A MAC combines a message with a shared secret; matching output shows that a secret-holder sent it and that no bit changed. A signature replaces that shared secret with a key pair: only the private-key holder signs, while anyone with the public key can verify.',
+    takeaway: 'Hash functions are one-way, but construction details matter. Do not invent a MAC; use HMAC.',
+    points: [['MAC', 'Both parties know one shared secret', 'either party can create proof'], ['SIGNATURE', 'Only the private-key holder signs', 'public verification cannot forge'], ['NON-REPUDIATION', 'One entity controls the signing key', 'authorship cannot be plausibly denied']],
+    note: 'Show the article’s original HMAC diagram. Hashes produce radically different output after even a one-bit input change, but a plain hash is not automatically a secure MAC.'
   },
   {
     label: 'Public key cryptography', zone: 'cert-cryptography', visual: 'keypair', time: 'computers can see', minutes: 4,
@@ -513,19 +513,27 @@ const certificateChapters = [
     note: 'Like a license, a real certificate has extra fields: expiry, allowed uses, and whether the holder may act as a CA. None of that changes the fundamental plot.'
   },
   {
-    label: 'X.509 and friends', zone: 'cert-formats', visual: 'formats', time: 'oh my…', minutes: 5,
-    eyebrow: 'X.509, ASN.1, OIDs, DER, PEM, PKCS · 06', title: 'This part actually is annoyingly complicated.',
-    thesis: 'Most certificate frustration comes from the esoteric way certificates and keys are represented as bits and bytes. Usually “certificate” means an X.509 v3 certificate in the PKIX form browsers understand.',
-    takeaway: 'If this is confusing, it is not you. It is the world.',
-    points: [['ASN.1 → DER', 'Schema → canonical binary encoding', 'X.509 is defined here'], ['DER → PEM', 'Binary → Base64 with labels', 'BEGIN CERTIFICATE'], ['PKCS ENVELOPES', '#7 carries chains; #12 can carry keys', '.p7b / .p12 / .pfx']],
-    note: 'Teach the layers, not every OID. Extensions and file names are inconsistent; inspect the content rather than trusting the suffix.'
+    label: 'X.509’s family tree', zone: 'cert-x509', visual: 'x509', time: 'a phone book from 1988', minutes: 5,
+    eyebrow: 'X.509, ASN.1, and OIDs · 06', title: 'X.509 was not designed for the web.',
+    thesis: 'The certificate browsers use is usually X.509 v3 in the PKIX profile. X.509 came from the 1988 X.500 global-directory project, which is why certificates still speak in countries, localities, organizations, and distinguished names.',
+    takeaway: 'ASN.1 defines the structure. OIDs tag meanings. DER turns that structure into canonical bytes.',
+    points: [['X.509 / PKIX', 'The certificate data model and web profile', 'RFC 5280'], ['ASN.1', 'A notation for typed structures', 'sequence · set · integer · string'], ['OID', 'A hierarchical identifier for meaning', '2.5.4.3 = commonName']],
+    note: 'The article’s actual distinguished-name and OID diagrams make the historical baggage concrete. OIDs are globally scoped numeric tags—not certificate values by themselves.'
+  },
+  {
+    label: 'Encoding and envelopes', zone: 'cert-formats', visual: 'formats', time: 'DER, PEM, PKCS…', minutes: 6,
+    eyebrow: 'DER, PEM, PKCS · 07', title: 'Separate the object, encoding, and envelope.',
+    thesis: 'DER is the binary encoding commonly used for ASN.1 certificate structures. PEM wraps DER in Base64 with a label. PKCS envelopes can carry more than one object: a chain, a private key, or both.',
+    takeaway: 'Inspect the contents; file extensions and PEM labels are inconsistent across tools.',
+    points: [['RAW OBJECT', 'X.509 certificate or PKCS#8 private key', 'ASN.1 structure'], ['ENCODING', 'DER binary or PEM-armored DER', '.der · .pem · .crt · .cer'], ['ENVELOPE', 'PKCS#7 chains; PKCS#12 chain + key', '.p7b · .p12 · .pfx']],
+    note: 'Include key handling: public/private keys follow the same ASN.1 → DER → optional PEM pattern. PKCS#8 carries private-key type metadata and may itself be encrypted.'
   },
   {
     label: 'Public Key Infrastructure', zone: 'cert-pki', visual: 'infrastructure', time: 'the whole system', minutes: 4,
     eyebrow: 'Public Key Infrastructure · 07', title: 'A certificate is less than half the story.',
     thesis: 'PKI is the umbrella term for everything needed to issue, distribute, store, use, verify, revoke, and otherwise manage certificates and keys. It is intentionally vague, like “database infrastructure.”',
     takeaway: 'Certificates are building blocks. PKI is libraries, protocols, people, policy, and automation.',
-    points: [['ISSUE', 'Names, registration, CAs, requests', 'create the binding'], ['DISTRIBUTE + USE', 'Roots, chains, clients, servers', 'make it useful'], ['OPERATE', 'Renewal, revocation, monitoring', 'keep it trustworthy']],
+    points: [['ISSUE', 'Names, registration, CAs, requests', 'create the binding'], ['DISTRIBUTE + USE', 'Roots, chains, clients, servers', 'make it useful'], ['OPERATE', 'Renewal, revocation, monitoring', 'keep it trustworthy'], ['OTHER MODELS', 'SSH authorized_keys · PGP web of trust', 'public-key infrastructure need not mean X.509']],
     note: 'A PKI does not even have to use certificates: authorized_keys is a simple public-key infrastructure that binds keys to names in a flat file.'
   },
   {
@@ -541,32 +549,40 @@ const certificateChapters = [
     eyebrow: 'Trust & Trustworthiness · 09', title: 'How do I know the issuer’s public key?',
     thesis: 'Relying parties are preconfigured with trusted root certificates in a trust store. The answer is simple, if not entirely satisfying: the roots are already there because some other trusted process put them there.',
     takeaway: 'Every trust chain ends in meatspace.',
-    points: [['ROOT CERTIFICATE', 'A local trust anchor', 'often self-signed'], ['TRUST STORE', 'Roots accepted by this relying party', 'OS / browser / application'], ['PROVENANCE', 'How the root got there', 'the actual source of trust']],
+    points: [['ROOT CERTIFICATE', 'A local trust anchor', 'self-signed does not mean self-trusted'], ['TRUST STORE', 'Roots accepted by this relying party', 'OS / browser / application'], ['ROOT PROGRAMS', 'Apple · Microsoft · Mozilla · Google', 'ship and update public roots'], ['PROVENANCE', 'How the root got there', 'the actual source of trust']],
     note: 'A self-signature only proves possession of the root private key. Anyone can self-sign any name. A root deserves trust because of its provenance.'
   },
   {
-    label: 'Trustworthiness', zone: 'cert-trustworthiness', visual: 'trust', time: 'trusted ≠ trustworthy', minutes: 4,
+    label: 'Trustworthiness', zone: 'cert-trustworthiness', visual: 'trustworthiness', time: 'trusted ≠ trustworthy', minutes: 4,
     eyebrow: 'Trustworthiness · 10', title: 'Trusted is descriptive. Trustworthy is moral.',
     thesis: 'Public trust stores contain many certificate authorities. Browsers trust them by default, but history includes compromise, mistaken issuance, government pressure, and malformed certificates.',
     takeaway: 'Your security depends on the discipline and scruples of organizations you did not choose.',
-    points: [['DESCRIPTIVE TRUST', 'The root is accepted by software', 'configured reality'], ['TRUSTWORTHINESS', 'The issuer behaves correctly', 'an empirical question'], ['INTERNAL POLICY', 'Trust fewer roots for private systems', 'reduce exposure']],
+    points: [['DESCRIPTIVE TRUST', 'The root is accepted by software', 'configured reality'], ['100+ AUTHORITIES', 'Any included public root expands exposure', 'shared ecosystem'], ['AUDIT + BASELINES', 'CAB Forum rules and WebTrust audits', 'risk reduction, not a guarantee'], ['INTERNAL POLICY', 'Trust fewer roots for private systems', 'reduce exposure']],
     note: 'For internal TLS, avoid trusting the entire public CA ecosystem when a dedicated internal root set will do.'
   },
   {
-    label: 'Federation', zone: 'cert-federation', visual: 'infrastructure', time: 'the least secure CA', minutes: 5,
+    label: 'Federation', zone: 'cert-federation', visual: 'federation', time: 'the least secure CA', minutes: 5,
     eyebrow: 'Federation · 11', title: 'Every public CA can vouch for almost anyone.',
     thesis: 'Web PKI relying parties generally trust every CA in their store to sign for every subscriber. The security of the federation is therefore only as good as its least secure member.',
     takeaway: 'A CA you have never met may still be able to issue a certificate your browser accepts for your domain.',
-    points: [['CAA', 'Restrict which CAs may issue', 'DNS policy signal'], ['TRANSPARENCY', 'Put issued certificates in public logs', 'detect fraudulent issuance'], ['DEDICATED ROOTS', 'Separate internal trust stores', 'shrink the federation']],
+    points: [['CAA', 'Restrict which CAs may issue', 'DNS policy signal'], ['CERTIFICATE TRANSPARENCY', 'Put issued certificates in public logs', 'detect fraudulent issuance'], ['PINNING', 'Limit accepted public keys', 'powerful and operationally dangerous'], ['DEDICATED ROOTS', 'Separate internal trust stores', 'shrink the federation']],
     note: 'Policy only works when relying parties enforce it. CAA and Certificate Transparency help; a narrow internal trust domain helps more for private systems.'
   },
   {
-    label: 'Intermediates and chains', zone: 'cert-chain', visual: 'chain', time: 'delegate issuance', minutes: 5,
+    label: 'Certificate authorities', zone: 'cert-authorities', visual: 'authority', time: 'the trusted issuer', minutes: 5,
+    eyebrow: 'Certificate authorities · 12', title: 'A CA is a certificate and a signing key—with process around it.',
+    thesis: 'Fundamentally, a certificate authority is a CA certificate plus its corresponding private key, used to sign other certificates. Operationally it also needs registration, request APIs, policy, audit, distribution, and protected key use.',
+    takeaway: 'Root CA means the self-signed certificate is a trust anchor. Online CA means issuance is remotely automatable.',
+    points: [['ROOT CA', 'Self-signed trust anchor', 'distributed to relying parties'], ['ONLINE CA', 'Accepts and processes requests', 'automation surface'], ['CA OPERATIONS', 'Identity proofing, policy, audit, key custody', 'the infrastructure around two artifacts']],
+    note: 'This definition is easy to skip and was explicit in the source. A signature makes a claim authentic; CA policy and proofing decide whether the claim should have been made.'
+  },
+  {
+    label: 'Intermediates and chains', zone: 'cert-chain', visual: 'chain', time: 'delegate issuance', minutes: 6,
     eyebrow: 'Intermediates, Chains, and Bundling · 12', title: 'Keep root keys offline. Put intermediates to work.',
-    thesis: 'A broadly distributed root is hard to revoke, so its private key should be used rarely. It signs intermediate certificates; online intermediate CAs do the routine job of signing leaf certificates.',
+    thesis: 'A broadly distributed root is hard to revoke, so its private key is kept offline and used rarely. It signs replaceable intermediate CA certificates; their online keys perform routine, automated leaf issuance.',
     takeaway: 'Leaf is signed by intermediate. Intermediate is signed by root. Root signs itself.',
-    points: [['ROOT CA', 'Broadly trusted and rarely used', 'offline trust anchor'], ['INTERMEDIATE CA', 'Online, automated, replaceable', 'issues subscribers'], ['LEAF CERTIFICATE', 'The service, person, or device', 'presented with intermediates']],
-    note: 'The server usually sends the leaf and intermediate bundle. The relying party already has the root. Ordering conventions are, annoyingly, not perfectly consistent.'
+    points: [['ROOT CA', 'Offline, broadly trusted, rarely used', 'signs intermediates'], ['INTERMEDIATE CA', 'Online, automated, easier to rotate', 'signs leaf certificates'], ['BUNDLE', 'Server sends leaf plus intermediates', 'the root usually stays in the trust store']],
+    note: 'Bundles may be PKCS#7/#12 or simply consecutive PEM objects. Tools disagree about leaf-to-root versus root-to-leaf order. Longer and cross-certified graphs exist, but complexity rises quickly.'
   },
   {
     label: 'Certificate path validation', zone: 'cert-validation', visual: 'validation', time: 'authenticate the path', minutes: 5,
@@ -577,7 +593,7 @@ const certificateChapters = [
     note: 'Encryption without authentication is pretty worthless: a private conversation with no idea who is on the other side. Do not normalize curl -k as a fix.'
   },
   {
-    label: 'Key & Certificate Lifecycle', zone: 'cert-lifecycle', visual: 'issuance', time: 'from request to rotation', minutes: 4,
+    label: 'Key & Certificate Lifecycle', zone: 'cert-lifecycle', visual: 'lifecycle', time: 'from request to rotation', minutes: 4,
     eyebrow: 'Key & Certificate Lifecycle · 14', title: 'Simple in outline. Intricate in operation.',
     thesis: 'A subscriber generates a key pair, asks a CA for a certificate, proves the requested name, receives the signed certificate, uses it, replaces it before expiry, and sometimes needs to revoke it.',
     takeaway: 'The hard problems hiding in the details are cache invalidation and naming things.',
@@ -609,7 +625,7 @@ const certificateChapters = [
     note: 'The CSR handles the first question. Registration and identity proofing handle the second.'
   },
   {
-    label: 'Certificate signing requests', zone: 'cert-csr', visual: 'issuance', time: 'PKCS#10', minutes: 4,
+    label: 'Certificate signing requests', zone: 'cert-csr', visual: 'csr', time: 'PKCS#10', minutes: 4,
     eyebrow: 'Certificate signing requests · 18', title: 'A CSR is signed by the requester.',
     thesis: 'A certificate signing request is another ASN.1 structure containing a public key, requested name, and signature. It is self-signed with the matching private key so the CA can verify proof of possession.',
     takeaway: 'A CSR can prove possession. It cannot prove the requested identity by itself.',
@@ -617,7 +633,7 @@ const certificateChapters = [
     note: 'CAs often ignore optional CSR details and apply their own certificate templates. The private key still never leaves the subscriber.'
   },
   {
-    label: 'Identity proofing', zone: 'cert-proofing', visual: 'issuance', time: 'who are you?', minutes: 5,
+    label: 'Identity proofing', zone: 'cert-proofing', visual: 'proofing', time: 'who are you?', minutes: 5,
     eyebrow: 'Identity proofing · 19', title: 'How does the CA authenticate you before you have a certificate?',
     thesis: 'It depends. Web PKI usually proves control of a domain through email, HTTP, or DNS challenges. Internal PKI can bootstrap from infrastructure that already knows what it is provisioning.',
     takeaway: 'A DV certificate proves control of a validation channel at a point in time—not moral ownership.',
@@ -629,15 +645,15 @@ const certificateChapters = [
     eyebrow: 'Expiration · 20', title: 'As we approach forever, compromise approaches certainty.',
     thesis: 'Certificates carry a not-before and not-after time because relying parties usually verify them without calling a central authority. Without an expiry, a stolen credential could remain trusted forever.',
     takeaway: 'Synchronize your clocks. Delete signing keys when they are no longer needed.',
-    points: [['NOT BEFORE', 'The certificate is not valid yet', 'clock sync matters'], ['VALID NOW', 'The relying party may accept it', 'all other checks still apply'], ['NOT AFTER', 'The relying party must reject it', 'credential expires']],
+    points: [['NOT BEFORE', 'The certificate is not valid yet', 'clock sync matters'], ['VALID NOW', 'The relying party may accept it', 'all other checks still apply'], ['NOT AFTER', 'The relying party must reject it', 'credential expires'], ['KEY RETENTION', 'Delete obsolete signing keys; retain decryption keys while needed', 'separate signing and encryption lifecycles']],
     note: 'Signing and encryption keys have different retention needs. A key still needed to decrypt old data cannot simply be deleted when its signing certificate expires.'
   },
   {
-    label: 'Renewal', zone: 'cert-renewal', visual: 'expiry', time: 'replace before expiry', minutes: 4,
+    label: 'Renewal', zone: 'cert-renewal', visual: 'renewal', time: 'replace before expiry', minutes: 4,
     eyebrow: 'Renewal · 21', title: 'There is no magic “extend” button.',
     thesis: 'Renewal means obtaining and deploying a new certificate before the old one expires. For internal PKI, the current certificate can often authenticate the renewal request and make the whole process automatic.',
     takeaway: 'If something hurts, do it more. Use short-lived certificates and automate the problem away.',
-    points: [['ISSUE NEW', 'Authenticate and request another certificate', 'often with a fresh key'], ['DEPLOY', 'Reload without dropping connections', 'rotate early'], ['OBSERVE', 'Monitor expiry and renewal health', 'avoid surprise outages']],
+    points: [['ISSUE NEW', 'Authenticate and request another certificate', 'there is no validity extension'], ['DEPLOY', 'Reload without dropping connections', 'rotate early'], ['SHORT LIFETIME', 'Web: often 90 days; internal: commonly ≤24h', 'force reliable automation'], ['OBSERVE', 'Monitor expiry and renewal health', 'avoid surprise outages']],
     note: 'Short lifetimes turn renewal from an annual emergency into ordinary plumbing. That pressure is healthy only if the automation is reliable.'
   },
   {
@@ -645,7 +661,7 @@ const certificateChapters = [
     eyebrow: 'Revocation · 22', title: 'Revocation is a big mess.',
     thesis: 'A CA can declare a certificate invalid before expiry, but every relying party must discover and enforce that decision. CRLs and OCSP introduce caching, latency, privacy, availability, and fail-open problems.',
     takeaway: 'For internal PKI, passive revocation with short-lived certificates is often the sane answer.',
-    points: [['CRL', 'A signed list of revoked serial numbers', 'large, cached, sometimes stale'], ['OCSP', 'Ask a responder about one certificate', 'privacy + availability'], ['PASSIVE REVOCATION', 'Deny renewal and wait for expiry', 'simple bounded exposure']],
+    points: [['CRL', 'A signed list of revoked serial numbers', 'large, cached, sometimes stale'], ['OCSP', 'Ask a responder about one certificate', 'privacy + availability'], ['OCSP STAPLING', 'Subscriber carries a short-lived signed status', 'less latency and browsing disclosure'], ['PASSIVE REVOCATION', 'Deny renewal and wait for expiry', 'simple bounded exposure']],
     note: 'Very short lifetimes increase load on the online CA and make clock synchronization critical. “How short?” depends on the threat model.'
   },
   {
@@ -666,8 +682,32 @@ const certificateChapters = [
   }
 ];
 
+const certificateActs = [
+  { through: 'cert-certificate', label: 'Act I · Why certificates exist', short: 'Concepts' },
+  { through: 'cert-formats', label: 'Act II · What the files contain', short: 'Formats' },
+  { through: 'cert-validation', label: 'Act III · How PKI creates trust', short: 'Trust' },
+  { through: 'cert-revocation', label: 'Act IV · Operate the lifecycle', short: 'Lifecycle' },
+  { through: 'cert-summary', label: 'Act V · Put it to work', short: 'Use' }
+];
+
+const certificateSourceArt = {
+  'cert-signatures': { images: ['/pki/hmac.jpg'], alt: 'Smallstep diagram showing a message and shared secret passing through a hash function to produce an HMAC', caption: 'The same message and secret reproduce the same MAC; alter either input and the output changes.' },
+  'cert-certificate': { images: ['/pki/drivers-license-certificate.jpg', '/pki/license-vs-certificate.jpg', '/pki/certificate-inspect.jpg'], alt: 'Smallstep diagrams comparing a driver license with an X.509 certificate and an inspected real certificate', caption: 'The analogy, the field-by-field comparison, and a real certificate inspection from the source article.' },
+  'cert-x509': { images: ['/pki/distinguished-name.jpg', '/pki/oids.jpg'], alt: 'Smallstep diagrams showing an X.509 distinguished name and object identifiers', caption: 'The historical directory name and the numeric tags that give ASN.1 values their meaning.' },
+  'cert-trust-stores': { images: ['/pki/chain-of-trust.jpg'], alt: 'Smallstep chain-of-trust diagram from a root trust store to a certificate subscriber', caption: 'A root reaches the machine through another trusted process. Follow that bootstrap far enough and it reaches people.' },
+  'cert-chain': { images: ['/pki/certificate-chain.jpg'], alt: 'Smallstep diagram of a leaf certificate chained through an intermediate to a root certificate', caption: 'The leaf and intermediate travel as a bundle; the root is already trusted locally.' },
+  'cert-validation': { images: ['/pki/path-validation.jpg'], alt: 'Smallstep diagram showing certificate path validation from a leaf through an intermediate to a trusted root', caption: 'The relying party authenticates every link and applies name, time, usage, constraint, and policy checks.' },
+  'cert-naming': { images: ['/pki/inspect-san-dns.jpg'], alt: 'Smallstep certificate inspection highlighting DNS Subject Alternative Names', caption: 'Modern relying parties match useful SANs, not the legacy common name.' },
+  'cert-using': { images: ['/pki/certificate-flow.jpg'], alt: 'Smallstep end-to-end internal CA certificate issuance and TLS configuration flow', caption: 'The complete flow: create a CA, distribute its root, issue a leaf, and configure a verified TLS client and server.' }
+};
+
+function certificateActFor(zone) {
+  const index = certificateChapters.findIndex(chapter => chapter.zone === zone);
+  return certificateActs.find(act => index <= certificateChapters.findIndex(chapter => chapter.zone === act.through)) || certificateActs.at(-1);
+}
+
 const scenes = [
-  ...certificateChapters.map(item => ({ ...item, type: 'certificate-chapter', section: 'certificates' })),
+  ...certificateChapters.map(item => ({ ...item, ...certificateSourceArt[item.zone], act: certificateActFor(item.zone), type: 'certificate-chapter', section: 'certificates' })),
   { type: 'pki-bridge', section: 'certificates', label: 'Beyond the handshake', zone: 'pki-to-app', time: 'connection established', minutes: 2, note: 'Close the certificate session here. A certificate authenticates a name and TLS protects the channel. Neither proves that the person intended this origin, that local code is honest, or that the resulting request is authorized and valid. The button starts the separate Request Under Fire session.' },
   { type: 'opening', section: 'journey', label: 'Case open', zone: 'open', time: 'before the click', minutes: 1.5, note: 'Now open the concrete case: “The connection is protected. When they click Pay, whose code receives their intent?” Let the audience choose which compromise path to trace first.' },
   { type: 'recon', section: 'journey', label: 'Recon workbench', zone: 'recon', time: 'T − 24 h', minutes: 4, note: 'Let the room choose commands. Each result is simulated and intentionally harmless: the point is how small public clues compose into an attack plan. After three clues, ask which exposure they would fix first—and which one is merely information, not a vulnerability by itself.' },
@@ -1473,8 +1513,133 @@ function SupplyChainVisual() {
   return <div className="supply-visual"><div className="supply-pipeline">{stages.map(([title, control], index) => <motion.div key={title} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .25, delay: reduceMotion ? 0 : index * .12 }}><span>0{index + 1}</span><strong>{title}</strong><small>{control}</small>{index < stages.length - 1 && <i>→</i>}</motion.div>)}</div><div className="supply-evidence"><div><span>ARTIFACT IDENTITY</span><code>sha256:9b71…e2c4</code></div><div><span>PROVENANCE</span><code>repo@a813c2 · workflow/build.yml</code></div><div><span>DEPLOY POLICY</span><code>signature ✓ · builder allowed ✓</code></div></div><p><strong>Lockfiles answer “which version?”</strong> Signatures and provenance help answer “who built this artifact from what?” An SBOM answers “what is inside?” Runtime isolation limits what compromised code can reach.</p></div>;
 }
 
+function BindingVisual() {
+  const reduceMotion = useReducedMotion();
+  return <div className="cert-exhibit binding-lab" role="img" aria-label="A signed certificate binding api.shop.example to an EC public key">
+    <div className="binding-node binding-name"><span>NAME</span><strong>api.shop.example</strong><small>an identity the system understands</small></div>
+    <div className="binding-route" aria-hidden="true"><i /><b>issuer signature</b><motion.em initial={reduceMotion ? false : { transform: 'translateX(-50%)' }} animate={reduceMotion ? {} : { transform: ['translateX(-50%)', 'translateX(50%)', 'translateX(-50%)'] }} transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }}>✦</motion.em></div>
+    <div className="binding-node binding-key"><span>PUBLIC KEY</span><strong>EC P-256</strong><code>03:A7:91:5C:2E…</code><small>verification without impersonation</small></div>
+    <motion.div className="binding-certificate" initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(16px) scale(.97)' }} animate={{ opacity: 1, transform: 'translateY(0) scale(1)' }} transition={{ duration: .48, delay: reduceMotion ? 0 : .35, ease: [.23, 1, .32, 1] }}><span>CERTIFICATE</span><strong>One portable claim</strong><p>Northstar CA says this name belongs to this key.</p><code>name ↔ public key · signature verified</code></motion.div>
+  </div>;
+}
+
+function WorldPKIVisual({ mode }) {
+  const reduceMotion = useReducedMotion();
+  const isFederation = mode === 'federation';
+  const isTrustworthiness = mode === 'trustworthiness';
+  const isTrust = mode === 'trust';
+  const isScope = mode === 'scope';
+  const headline = isFederation ? 'Any trusted CA can affect the whole web.' : isTrustworthiness ? 'Trusted by software does not mean worthy of trust.' : isTrust ? 'A local root unlocks a global path.' : isScope ? 'Public outside. Private inside.' : 'Identity that travels farther than the network boundary.';
+  const description = isFederation ? 'One weak issuer can mint evidence accepted oceans away.' : isTrustworthiness ? 'A browser may accept an issuer by configuration while its real-world discipline remains an empirical question.' : isTrust ? 'Software updates place roots locally; certificate chains carry that decision worldwide.' : isScope ? 'Web PKI connects public DNS to universal browser trust. Internal PKI gives workloads a narrower, automated trust domain.' : 'Names, keys, issuers, libraries, policy, automation, and people cooperate across regions.';
+  const nodes = [[18,34,'SFO'],[31,24,'YYZ'],[47,32,'LON'],[55,47,'NBO'],[66,29,'DEL'],[79,38,'SIN'],[88,68,'SYD'],[30,68,'GRU']];
+  return <div className={`cert-exhibit world-pki mode-${mode}`} role="img" aria-label={`${mode} shown as a global public key infrastructure map`}>
+    <div className="world-copy"><span>{isFederation ? 'FEDERATED TRUST' : isTrustworthiness ? 'TRUSTED ≠ TRUSTWORTHY' : isTrust ? 'TRUST BEGINS LOCALLY' : isScope ? 'TWO TRUST DOMAINS' : 'PUBLIC KEY INFRASTRUCTURE'}</span><strong>{headline}</strong><p>{description}</p></div>
+    <div className="world-map" aria-hidden="true"><svg viewBox="0 0 100 76" preserveAspectRatio="none"><ellipse cx="52" cy="39" rx="43" ry="31" /><path d="M9 39h86M16 23h73M16 55h73M52 8c-18 16-18 46 0 62M52 8c18 16 18 46 0 62" />{nodes.slice(1).map((node,index)=><motion.path key={node[2]} className={(isFederation||isTrustworthiness) && index === 3 ? 'world-route is-risk' : 'world-route'} d={`M${nodes[0][0]} ${nodes[0][1]} Q 50 ${8 + index * 7} ${node[0]} ${node[1]}`} initial={reduceMotion ? false : { pathLength: 0, opacity: .2 }} animate={{ pathLength: 1, opacity: 1 }} transition={{ duration: 1.2, delay: reduceMotion ? 0 : index * .14, ease: [.23,1,.32,1] }} />)}</svg>{nodes.map(([x,y,label],index)=><div key={label} className={`world-node ${(isFederation||isTrustworthiness) && index === 4 ? 'is-risk' : ''}`} style={{ left:`${x}%`,top:`${y}%` }}><i /><span>{label}</span></div>)}<div className="world-pulse"><b>{isFederation ? '100+ roots' : isScope ? 'web / internal' : 'root.pem'}</b><small>{isFederation ? 'broad authority' : isScope ? 'choose the domain' : 'local trust anchor'}</small></div></div>
+    <div className="world-legend"><span><i className="is-local" /> TRUST STORE</span><span><i /> VERIFIED PATH</span>{(isFederation||isTrustworthiness) && <span><i className="is-risk" /> ISSUER RISK</span>}</div>
+  </div>;
+}
+
+function DerPemLab() {
+  const [step, setStep] = useState(0);
+  const bytes = [0x30,0x1e,0x02,0x01,0x01,0x04,0x08,0x4e,0x6f,0x72,0x74,0x68,0x73,0x74,0x30,0x0d,0x06,0x07,0x2a,0x86,0x48,0xce,0x3d,0x02,0x01,0x03,0x02,0x00,0xa7,0x91,0x5c,0x2e];
+  const hex = bytes.map(value => value.toString(16).padStart(2,'0')).join(' ');
+  const base64 = typeof btoa === 'function' ? btoa(String.fromCharCode(...bytes)) : '';
+  const views = [
+    { label:'01 · DER BYTES', title:'32 bytes · binary', body:hex, note:'A real 32-byte ASN.1 DER fragment: tag, length, then values.' },
+    { label:'02 · BASE64', title:'Binary becomes text-safe', body:base64, note:'These exact 32 bytes encode to 44 Base64 characters.' },
+    { label:'03 · PEM ARMOR', title:'Label + wrapped Base64', body:`-----BEGIN CERTIFICATE-----\n${base64}\n-----END CERTIFICATE-----`, note:'PEM does not change the certificate—it packages DER for transport.' }
+  ];
+  const view = views[step];
+  return <div className="cert-exhibit der-lab"><div className="der-steps" role="tablist" aria-label="DER to PEM transformation">{views.map((item,index)=><button type="button" role="tab" aria-selected={step===index} className={step===index?'is-selected':''} onClick={()=>setStep(index)} key={item.label}><span>0{index+1}</span><strong>{['DER','BASE64','PEM'][index]}</strong></button>)}</div><div className="der-inspector" aria-live="polite"><span>{view.label}</span><strong>{view.title}</strong><motion.pre key={step} initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:.2 }}>{view.body}</motion.pre><p>{view.note}</p></div><div className="der-byte-ruler" aria-hidden="true">{bytes.map((byte,index)=><i className={step>0?'is-encoded':''} key={`${byte}-${index}`}>{byte.toString(16).padStart(2,'0')}</i>)}</div></div>;
+}
+
+function ValidationLab() {
+  const [insecure, setInsecure] = useState(false);
+  const checks = [['SIGNATURE PATH','leaf → intermediate → root'],['HOSTNAME / SAN','api.shop.example'],['TIME + USAGE','valid now · serverAuth']];
+  return <div className={`cert-exhibit validation-lab ${insecure?'is-insecure':''}`}><div className="validation-command"><span>$ curl {insecure ? '-k ' : '--cacert root.pem '}https://api.shop.example</span><button type="button" aria-pressed={insecure} onClick={()=>setInsecure(value=>!value)}><i />curl -k {insecure?'ON':'OFF'}</button></div><div className="validation-path">{checks.map(([label,value],index)=><div key={label}><span>0{index+1}</span><strong>{label}</strong><code>{value}</code><b>{insecure?'SKIPPED':'PASS'}</b>{index<checks.length-1&&<i>↓</i>}</div>)}</div><div className="validation-verdict" aria-live="polite"><span>{insecure?'ENCRYPTED · NOT AUTHENTICATED':'AUTHENTICATED TLS'}</span><strong>{insecure?'Private conversation with an unknown peer.':'The chain terminates at your intended root.'}</strong><code>{insecure?'⚠ attacker certificate accepted':'✓ HTTP/2 200 · peer verified'}</code></div></div>;
+}
+
+function RevocationLab() {
+  const [days,setDays] = useState(24);
+  const [online,setOnline] = useState(false);
+  const exposure = Math.max(days - 1, 0);
+  return <div className="cert-exhibit revocation-lab"><div className="revocation-controls"><div><span>CERTIFICATE LIFETIME</span><strong>{days} {days===1?'day':'days'}</strong><input aria-label="Certificate lifetime in days" type="range" min="1" max="90" value={days} onChange={event=>setDays(Number(event.target.value))} /></div><button type="button" aria-pressed={online} onClick={()=>setOnline(value=>!value)}><i />OCSP RESPONDER · {online?'ONLINE':'UNREACHABLE'}</button></div><div className="revocation-timeline"><div className="lifetime-track" style={{'--compromise':`${Math.max(3,100/days)}%`}}><i /><span>ISSUED</span><b>KEY STOLEN · DAY 1</b><em>EXPIRES · DAY {days}</em></div><div className={`ocsp-request ${online?'is-online':''}`}><span>RELYING PARTY</span><i>→ status?</i><strong>OCSP</strong><i>← {online?'REVOKED':'timeout'}</i></div></div><div className={`revocation-result ${online?'is-blocked':'is-open'}`} aria-live="polite"><span>{online?'HARD SIGNAL RECEIVED':'FAIL OPEN'}</span><strong>{online?'Certificate rejected now.':`Stolen credential may remain useful for ${exposure} more ${exposure===1?'day':'days'}.`}</strong><p>{online?'The responder is both available and enforced.':'Short-lived certificates bound the exposure even when revocation infrastructure fails.'}</p></div></div>;
+}
+
+function TlsLadder() {
+  const reduceMotion = useReducedMotion();
+  const [run,setRun] = useState(0);
+  const flights = [['→','ClientHello','supported versions · key share'],['←','ServerHello + Certificate','server key share · chain'],['→','Finished','client verifies and proves transcript'],['←','Finished','encrypted channel ready'],['→','HTTP request','GET /health'],['←','HTTP response','200 OK']];
+  return <div className="cert-exhibit tls-ladder"><div className="tls-peers"><div><i>RP</i><span>CLIENT</span><strong>root.pem</strong></div><button type="button" onClick={()=>setRun(value=>value+1)}>Replay handshake ↻</button><div><i>SUB</i><span>SERVER</span><strong>chain + private key</strong></div></div><div className="tls-flights" key={run}>{flights.map(([direction,title,detail],index)=><motion.div className={direction==='→'?'to-server':'to-client'} key={`${title}-${run}`} initial={reduceMotion?false:{opacity:0,transform:`translateX(${direction==='→'?'-18px':'18px'})`}} animate={{opacity:1,transform:'translateX(0)'}} transition={{duration:.28,delay:reduceMotion?0:index*.32,ease:[.23,1,.32,1]}}><span>{direction}</span><strong>{title}</strong><code>{detail}</code></motion.div>)}</div><div className="tls-ready"><span>APPLICATION DATA</span><strong>Authenticated · confidential · tamper-evident</strong></div></div>;
+}
+
+function LifecycleVisual({ scene }) {
+  const stages = scene.visual === 'renewal' ? [['OLD CERT','serving traffic'],['ISSUE NEW','fresh key + proof'],['OVERLAP','both valid briefly'],['RELOAD','new connections rotate'],['RETIRE','old key deleted']] : [['NAME','choose useful SANs'],['KEY','generate locally'],['PROVE','CSR + identity'],['ISSUE','CA signs'],['USE','present + verify'],['RENEW','replace early']];
+  return <div className={`cert-exhibit lifecycle-orbit mode-${scene.visual}`}><div className="lifecycle-core"><span>{scene.visual==='renewal'?'ZERO-DOWNTIME ROTATION':'CONTINUOUS PKI'}</span><strong>{scene.visual==='renewal'?'replace, never extend':'identity is operated'}</strong></div><div className="lifecycle-ring" aria-hidden="true" />{stages.map(([title,detail],index)=><motion.div className="lifecycle-stage" style={{'--stage-index':index,'--stage-count':stages.length}} initial={{opacity:0}} animate={{opacity:1}} transition={{duration:.25,delay:index*.08}} key={title}><span>{String(index+1).padStart(2,'0')}</span><strong>{title}</strong><small>{detail}</small></motion.div>)}</div>;
+}
+
+function NamesVisual() {
+  const [kind,setKind] = useState('dns');
+  const names={dns:['DNS SAN','api.shop.example','service / machine'],email:['EMAIL SAN','mike@example.com','person'],uri:['URI SAN','spiffe://prod/payments/api','workload']};
+  const item=names[kind];
+  return <div className="cert-exhibit names-lab"><div className="phonebook"><span>LEGACY X.500 DIRECTORY</span>{['C = US','ST = California','L = San Francisco','O = Example Corp','OU = Payments','CN = api.shop.example'].map(value=><code key={value}>{value}</code>)}<strong>Built like a global phone book.</strong></div><div className="names-arrow">→<small>useful names</small></div><div className="san-picker"><div role="tablist">{Object.keys(names).map(value=><button type="button" role="tab" aria-selected={kind===value} className={kind===value?'is-selected':''} onClick={()=>setKind(value)} key={value}>{value.toUpperCase()}</button>)}</div><span>{item[0]}</span><motion.strong key={kind} initial={{opacity:0}} animate={{opacity:1}}>{item[1]}</motion.strong><code>{item[2]}</code><p>The relying party already understands this namespace.</p></div></div>;
+}
+
+function CsrVisual() {
+  const reduceMotion=useReducedMotion();
+  const parts=[['PUBLIC KEY','03:A7:91…'],['REQUESTED SAN','api.shop.example'],['SIGNATURE','made with private key']];
+  return <div className="cert-exhibit csr-lab"><div className="csr-workload"><span>SUBSCRIBER</span><strong>private key stays here</strong><i>◆</i></div><div className="csr-envelope">{parts.map(([label,value],index)=><motion.div initial={reduceMotion?false:{opacity:0,transform:'translateX(-14px)'}} animate={{opacity:1,transform:'translateX(0)'}} transition={{duration:.3,delay:reduceMotion?0:index*.18,ease:[.23,1,.32,1]}} key={label}><span>{label}</span><code>{value}</code></motion.div>)}<strong>PKCS #10 · SELF-SIGNED REQUEST</strong></div><div className="csr-ca"><span>CERTIFICATE AUTHORITY</span><strong>possession ✓</strong><small>identity still unproven</small></div></div>;
+}
+
+function ProofingVisual() {
+  const [method,setMethod]=useState('dns');
+  const methods={dns:['DNS-01','_acme-challenge.api.shop.example','TXT · p7L4f…','Proves control of DNS at this moment.'],http:['HTTP-01','/.well-known/acme-challenge/p7L4f','200 · p7L4f…','Proves control of this HTTP route.'],internal:['WORKLOAD ATTESTATION','spiffe://prod/payments/api','Kubernetes service account ✓','Bootstraps from trusted provisioning context.']};
+  const item=methods[method];
+  return <div className="cert-exhibit proofing-lab"><div className="proofing-tabs" role="tablist">{Object.keys(methods).map(value=><button type="button" role="tab" aria-selected={method===value} className={method===value?'is-selected':''} onClick={()=>setMethod(value)} key={value}>{methods[value][0]}</button>)}</div><div className="proofing-challenge"><span>CA CHALLENGE</span><strong>{item[1]}</strong><i>→</i><code>{item[2]}</code></div><div className="proofing-verdict"><span>EVIDENCE, NOT MORAL OWNERSHIP</span><strong>{item[3]}</strong><p>The CA still applies templates, policy, and authorization before issuing.</p></div></div>;
+}
+
+function RolesVisual() {
+  const reduceMotion=useReducedMotion();
+  const roles=[['SUBSCRIBER','api.shop.example','presents certificate'],['ISSUER','Northstar CA','signs the binding'],['RELYING PARTY','browser / service','verifies and decides']];
+  return <div className="cert-exhibit roles-constellation" role="img" aria-label="Subscriber, issuer, and relying party connected by certificate issuance and verification"><svg viewBox="0 0 100 56" aria-hidden="true"><path d="M20 40 Q 50 4 80 40"/><path d="M20 40 H80"/><circle cx="50" cy="24" r="4"/></svg><div className="roles-certificate"><span>SIGNED CLAIM</span><strong>api.shop.example ↔ 03:A7:91…</strong></div>{roles.map(([role,name,action],index)=><motion.div className={`role-actor actor-${index}`} initial={reduceMotion?false:{opacity:0,transform:'translateY(10px)'}} animate={{opacity:1,transform:'translateY(0)'}} transition={{duration:.34,delay:reduceMotion?0:index*.12,ease:[.23,1,.32,1]}} key={role}><i>{index===0?'SUB':index===1?'CA':'RP'}</i><span>{role}</span><strong>{name}</strong><small>{action}</small></motion.div>)}</div>;
+}
+
+function KeyPairVisual() {
+  const reduceMotion=useReducedMotion();
+  const [run,setRun]=useState(0);
+  const challenge=['7F 2A 91 D4','C8 11 6E 3B','4A F0 22 9C'][run%3];
+  return <div className="cert-exhibit keypair-challenge"><div className="challenge-heading"><span>PROVE KNOWLEDGE WITHOUT SHARING IT</span><button type="button" onClick={()=>setRun(value=>value+1)}>New challenge ↻</button></div><div className="challenge-machine" key={run}><div><span>RELYING PARTY</span><strong>fresh random number</strong><code>{challenge}</code></div><motion.i initial={reduceMotion?false:{transform:'scaleX(0)'}} animate={{transform:'scaleX(1)'}} transition={{duration:.55,ease:[.77,0,.175,1]}}>→ challenge</motion.i><div className="private-vault"><span>SUBSCRIBER</span><strong>PRIVATE KEY</strong><code>sign({challenge})</code><b>never leaves</b></div><motion.i initial={reduceMotion?false:{transform:'scaleX(0)'}} animate={{transform:'scaleX(1)'}} transition={{duration:.55,delay:reduceMotion?0:.45,ease:[.77,0,.175,1]}}>← signature</motion.i><div><span>PUBLIC KEY</span><strong>VERIFY ✓</strong><code>identity seen across network</code></div></div><p>Knowing the public key lets the verifier recognize the private-key holder—not impersonate it.</p></div>;
+}
+
+function IssuanceVisual() {
+  const reduceMotion=useReducedMotion();
+  return <div className="cert-exhibit issuance-gates"><div className="issuance-request"><span>REQUEST</span><strong>api.shop.example</strong><code>CSR · 03:A7:91…</code></div><div className="issuance-gate"><i>01</i><span>KEY POSSESSION</span><strong>CSR signature verifies</strong><b>PASS</b></div><div className="issuance-gate"><i>02</i><span>IDENTITY</span><strong>name control proven</strong><b>PASS</b></div><motion.div className="issued-leaf" initial={reduceMotion?false:{opacity:0,transform:'translateX(-18px) scale(.97)'}} animate={{opacity:1,transform:'translateX(0) scale(1)'}} transition={{duration:.48,delay:reduceMotion?0:.55,ease:[.23,1,.32,1]}}><span>ISSUED LEAF</span><strong>api.shop.example</strong><code>signed by Northstar Intermediate CA</code><b>VALID · 24H</b></motion.div></div>;
+}
+
+function SourceArtExhibit({ scene }) {
+  const [active, setActive] = useState(0);
+  const image = scene.images[active];
+  return <div className="cert-exhibit source-art-exhibit">
+    <div className="source-art-stage">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.img key={image} src={image} alt={scene.alt} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: .2 }} />
+      </AnimatePresence>
+      {scene.images.length > 1 && <div className="source-art-tabs" role="tablist" aria-label="Source diagrams">
+        {scene.images.map((src, index) => <button type="button" role="tab" aria-selected={active === index} className={active === index ? 'is-selected' : ''} onClick={() => setActive(index)} key={src}>0{index + 1}</button>)}
+      </div>}
+    </div>
+    <aside className="source-art-notes">
+      <span>FROM THE ORIGINAL ARTICLE</span>
+      <strong>{scene.caption}</strong>
+      <div>{scene.points.map(([label, title, detail]) => <article key={label}><span>{label}</span><strong>{title}</strong><code>{detail}</code></article>)}</div>
+      <a href="https://smallstep.com/blog/everything-pki/" target="_blank" rel="noreferrer">View source article ↗</a>
+    </aside>
+  </div>;
+}
+
 function CertificateExhibit({ scene }) {
   const reduceMotion = useReducedMotion();
+  if (scene.images) return <SourceArtExhibit scene={scene} />;
   const enter = index => ({
     initial: reduceMotion ? false : { opacity: 0, transform: 'translateY(12px)' },
     animate: { opacity: 1, transform: 'translateY(0px)' },
@@ -1486,6 +1651,20 @@ function CertificateExhibit({ scene }) {
       <span>{label}</span><strong>{title}</strong><code>{detail}</code>
     </motion.article>
   ));
+
+  if (scene.visual === 'plot') return <BindingVisual />;
+  if (scene.visual === 'roles') return <RolesVisual />;
+  if (scene.visual === 'keypair') return <KeyPairVisual />;
+  if (scene.visual === 'issuance') return <IssuanceVisual />;
+  if (scene.visual === 'formats') return <DerPemLab />;
+  if (['infrastructure', 'federation', 'trust', 'trustworthiness', 'scope'].includes(scene.visual)) return <WorldPKIVisual mode={scene.visual} />;
+  if (scene.visual === 'validation') return <ValidationLab />;
+  if (scene.visual === 'revocation') return <RevocationLab />;
+  if (scene.visual === 'using') return <TlsLadder />;
+  if (scene.visual === 'lifecycle' || scene.visual === 'renewal') return <LifecycleVisual scene={scene} />;
+  if (scene.visual === 'names') return <NamesVisual />;
+  if (scene.visual === 'csr') return <CsrVisual />;
+  if (scene.visual === 'proofing') return <ProofingVisual />;
 
   if (scene.visual === 'certificate') return (
     <div className="cert-exhibit exhibit-certificate" aria-label="Anatomy of a certificate">
@@ -1500,23 +1679,9 @@ function CertificateExhibit({ scene }) {
     </div>
   );
 
-  if (scene.visual === 'formats') return (
-    <div className="cert-exhibit exhibit-formats" aria-label="Certificate format layers">
-      <div className="format-sheets">{cards}</div>
-      <motion.pre {...enter(4)}>-----BEGIN CERTIFICATE-----{`\n`}MIIBwzCCAWqgAwIBAgIR…{`\n`}-----END CERTIFICATE-----</motion.pre>
-    </div>
-  );
-
   if (scene.visual === 'chain') return (
     <div className="cert-exhibit exhibit-chain" aria-label="Leaf, intermediate, and root certificate chain">
       {scene.points.slice().reverse().map(([label, title, detail], index) => <motion.article key={label} {...enter(index)}><i>{index === 0 ? 'presented first' : index === 2 ? 'already trusted' : 'issuer verified'}</i><span>{label}</span><strong>{title}</strong><code>{detail}</code></motion.article>)}
-    </div>
-  );
-
-  if (scene.visual === 'validation') return (
-    <div className="cert-exhibit exhibit-validation" aria-label="Certificate path validation checklist">
-      <div className="validation-terminal"><span>$ connect api.shop.example</span>{cards}<footer><b>ACCEPT</b> · authenticated encrypted channel</footer></div>
-      <div className="validation-warning"><code>curl -k</code><strong>turns authentication off</strong></div>
     </div>
   );
 
@@ -1524,14 +1689,6 @@ function CertificateExhibit({ scene }) {
     <div className="cert-exhibit exhibit-expiry" aria-label="Certificate validity and renewal timeline">
       <div className="expiry-track"><span>NOT BEFORE</span><i><b /></i><span>NOT AFTER</span><em>ROTATE HERE</em></div>
       <div className="cert-card-grid">{cards}</div>
-    </div>
-  );
-
-  if (scene.visual === 'scope') return (
-    <div className="cert-exhibit exhibit-scope" aria-label="Comparison between Web PKI and internal PKI">
-      <section><span>OPEN INTERNET</span><strong>Web PKI</strong><p>Universal browser trust<br />Public DNS identities</p></section>
-      <div><b>VS</b><small>different trust domains</small></div>
-      <section><span>YOUR SYSTEM</span><strong>Internal PKI</strong><p>Private workload identity<br />Your issuance policy</p></section>
     </div>
   );
 
@@ -1556,12 +1713,18 @@ function CertificateChapter({ scene }) {
   return (
     <section className={`scene-shell certificate-chapter chapter-${scene.visual}`} aria-labelledby={`chapter-${scene.zone}`}>
       <div className="chapter-copy">
-        <div className="scene-index"><span>{scene.eyebrow}</span><strong>{scene.time}</strong></div>
+        <div className="scene-index"><span>{scene.act.label} · {scene.eyebrow}</span><strong>{scene.time}</strong></div>
         <motion.h2 id={`chapter-${scene.zone}`} initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(14px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }} transition={{ duration: .48, ease: [.23, 1, .32, 1] }}>{scene.title}</motion.h2>
         <p className="scene-thesis">{scene.thesis}</p>
         <div className="chapter-takeaway"><span>KEEP THIS</span><strong>{scene.takeaway}</strong></div>
       </div>
-      <CertificateExhibit scene={scene} />
+      <div className="chapter-exhibit-floor">
+        <div className="exhibit-floor-label" aria-hidden="true"><span>{scene.images ? 'SOURCE DIAGRAM' : 'FIELD ARTIFACT'} · {scene.act.short}</span><strong>{scene.label}</strong></div>
+        <CertificateExhibit scene={scene} />
+        {!scene.images && <div className="chapter-fact-strip" aria-label={`${scene.label} key details`}>
+          {scene.points.map(([label, title, detail]) => <article key={`${label}-${title}`}><span>{label}</span><strong>{title}</strong><code>{detail}</code></article>)}
+        </div>}
+      </div>
       <footer className="chapter-footer"><span>{scene.label}</span><a href="https://smallstep.com/blog/everything-pki/" target="_blank" rel="noreferrer">Based on Everything PKI by Smallstep ↗</a></footer>
     </section>
   );
@@ -1838,6 +2001,14 @@ export default function App() {
   const sessionEndIndex = currentSession === 'certificates' ? certificateEndIndex : scenes.length - 1;
   const sessionScenes = scenes.slice(sessionStartIndex, sessionEndIndex + 1);
   const sessionSceneIndex = sceneIndex - sessionStartIndex;
+  const animateSceneFrame = !reduceMotion && inputMode !== 'keyboard' && currentSession !== 'certificates';
+
+  // Certificate chapters are taller than the viewport. Reset the scroll position
+  // after React commits the next chapter but before the browser paints it, so a
+  // new scene is never rendered at the previous chapter's scroll offset.
+  useLayoutEffect(() => {
+    if (stageRef.current) stageRef.current.scrollTop = 0;
+  }, [sceneIndex]);
 
   useEffect(() => {
     document.body.dataset.input = inputMode;
@@ -1862,13 +2033,17 @@ export default function App() {
 
   function goTo(index, mode = 'pointer') {
     const next = Math.min(Math.max(index, 0), scenes.length - 1);
+    // Move the existing chapter to the top immediately. The layout effect above
+    // repeats this after the new chapter mounts, covering both sides of the swap.
+    if (stageRef.current) stageRef.current.scrollTop = 0;
+    if (next === sceneIndex) return;
+
     setInputMode(mode);
     setDirection(next >= sceneIndex ? 1 : -1);
     setSceneIndex(next);
     setPhase(0);
     setSceneBrowserOpen(false);
     window.history.replaceState(null, '', `#scene-${next}`);
-    stageRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }
 
   function startSession(index) {
@@ -1895,6 +2070,27 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [sceneIndex, phase, scene.type, sceneBrowserOpen, sessionStartIndex, sessionEndIndex]);
 
+  const sceneFrame = (
+    <motion.div className="scene-frame" key={sceneIndex}
+      initial={animateSceneFrame ? { opacity: 0, transform: `translateX(${direction * 28}px) scale(.996)` } : false}
+      animate={{ opacity: 1, transform: 'translateX(0px) scale(1)' }}
+      exit={animateSceneFrame ? { opacity: 0, transform: `translateX(${direction * -20}px) scale(.998)` } : undefined}
+      transition={animateSceneFrame ? { type: 'spring', visualDuration: .34, bounce: .04 } : { duration: 0 }}>
+      {scene.type !== 'opening' && <h1 className="sr-only">{currentSession === 'certificates' ? 'Certificates & PKI' : 'Request Under Fire'}: {scene.label}</h1>}
+      {scene.type === 'opening' && <Opening next={() => goTo(sceneIndex + 1)} branch={branch} setBranch={setBranch} />}
+      {scene.type === 'certificate-chapter' && <CertificateChapter scene={scene} />}
+      {scene.type === 'pki-bridge' && <PkiToAppBridge next={() => startSession(requestStartIndex)} />}
+      {scene.type === 'recon' && <ReconWorkbench next={() => goTo(sceneIndex + 1)} />}
+      {scene.type === 'journey' && <JourneyScene scene={scene} branch={branch} setBranch={setBranch} />}
+      {scene.type === 'bridge' && <ReflectionBridge branch={branch} next={() => goTo(sceneIndex + 1)} />}
+      {scene.type === 'checkpoint' && <Checkpoint scene={scene} phase={phase} setPhase={setPhase} />}
+      {scene.type === 'quiz' && <FieldTest />}
+      {scene.type === 'lifecycle' && <LifecycleScene />}
+      {scene.type === 'appendix' && <AppendixPlaceholder />}
+      {scene.type === 'closing' && <Closing restart={() => goTo(requestStartIndex)} openLens={() => lensRef.current?.showModal()} />}
+    </motion.div>
+  );
+
   return (
     <>
       <a className="skip-link" href="#presentation">Skip to presentation</a>
@@ -1914,26 +2110,9 @@ export default function App() {
       </header>
 
       <main id="presentation" className="stage" ref={stageRef} tabIndex="-1">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div className="scene-frame" key={sceneIndex}
-            initial={reduceMotion || inputMode === 'keyboard' ? false : { opacity: 0, transform: `translateX(${direction * 28}px) scale(.996)` }}
-            animate={{ opacity: 1, transform: 'translateX(0px) scale(1)' }}
-            exit={reduceMotion || inputMode === 'keyboard' ? { opacity: 0 } : { opacity: 0, transform: `translateX(${direction * -20}px) scale(.998)` }}
-            transition={{ type: 'spring', visualDuration: .34, bounce: .04 }}>
-            {scene.type !== 'opening' && <h1 className="sr-only">{currentSession === 'certificates' ? 'Certificates & PKI' : 'Request Under Fire'}: {scene.label}</h1>}
-            {scene.type === 'opening' && <Opening next={() => goTo(sceneIndex + 1)} branch={branch} setBranch={setBranch} />}
-            {scene.type === 'certificate-chapter' && <CertificateChapter scene={scene} />}
-            {scene.type === 'pki-bridge' && <PkiToAppBridge next={() => startSession(requestStartIndex)} />}
-            {scene.type === 'recon' && <ReconWorkbench next={() => goTo(sceneIndex + 1)} />}
-            {scene.type === 'journey' && <JourneyScene scene={scene} branch={branch} setBranch={setBranch} />}
-            {scene.type === 'bridge' && <ReflectionBridge branch={branch} next={() => goTo(sceneIndex + 1)} />}
-            {scene.type === 'checkpoint' && <Checkpoint scene={scene} phase={phase} setPhase={setPhase} />}
-            {scene.type === 'quiz' && <FieldTest />}
-            {scene.type === 'lifecycle' && <LifecycleScene />}
-            {scene.type === 'appendix' && <AppendixPlaceholder />}
-            {scene.type === 'closing' && <Closing restart={() => goTo(requestStartIndex)} openLens={() => lensRef.current?.showModal()} />}
-          </motion.div>
-        </AnimatePresence>
+        {currentSession === 'certificates' ? sceneFrame : (
+          <AnimatePresence mode="popLayout" initial={false}>{sceneFrame}</AnimatePresence>
+        )}
       </main>
 
       <SceneBrowser open={sceneBrowserOpen} currentIndex={sceneIndex} onClose={() => setSceneBrowserOpen(false)} onSelect={goTo} />
