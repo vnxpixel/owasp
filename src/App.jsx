@@ -68,30 +68,30 @@ const compromisePaths = {
     label: 'A · Phishing site',
     description: 'A convincing surface on the wrong origin',
     color: 'var(--phish)',
-    steps: ['Weaponize', 'Sign-in fork', 'Wrong origin', 'Data entry', 'Collector', 'Session replay', 'Impact']
+    steps: ['Weaponize', 'Sign-in fork', 'Wrong origin', 'Data entry', 'Session replay', 'Impact']
   },
   extension: {
     short: 'Local extension',
     label: 'B · Local extension',
     description: 'The right site with hostile code beside it',
     color: 'var(--extension)',
-    steps: ['Install', 'Session created', 'Right origin', 'DOM control', 'Two requests', 'Privilege gap', 'Impact']
+    steps: ['Install', 'Session created', 'Right origin', 'DOM control', 'Two requests', 'Impact']
   }
 };
 
 const journeyBeats = [
   {
     label: 'The setup', time: 'T − 3 days', progress: 0, focus: 'attacker',
-    title: 'The click begins before Maya arrives.',
+    title: 'The click begins before they arrive.',
     thesis: 'The attacker prepares a believable path, then waits for a normal human moment.',
     phishing: {
-      maya: { location: 'Away from the browser', status: 'Unaware', title: 'Nothing has happened to Maya yet.', body: 'Her real account and session are still intact.' },
-      browser: { location: 'No hostile tab open', status: 'Clean', title: 'The browser has no special knowledge.', body: 'A future padlock will prove encryption to a domain—not that the domain is the one Maya intended.' },
+      user: { location: 'Away from the browser', status: 'Unaware', title: 'Nothing has happened to them yet.', body: 'Their real account and session are still intact.' },
+      browser: { location: 'No hostile tab open', status: 'Clean', title: 'The browser has no special knowledge.', body: 'The browser’s HTTPS indicator will show that TLS is active and the certificate is valid for shop-example.help. It does not show that shop-example.help is the intended shop.example domain.' },
       attacker: { location: 'Lookalike kit · remote server', status: 'Building', title: 'Copy the surface. Change the destination.', body: 'A cloned checkout is deployed at shop-example.help with a collector behind the Pay button.', artifact: 'POST /collect  ←  checkout form' },
       evidence: [['origin', 'shop-example.help', 'attacker'], ['cookie', 'none from shop.example', 'browser'], ['surface', 'pixel-matched checkout', 'attacker']]
     },
     extension: {
-      maya: { location: 'Extension store', status: 'Trust decision', title: 'A useful tool asks for broad access.', body: '“Parcel Price Finder” promises automatic delivery discounts.' },
+      user: { location: 'Extension store', status: 'Trust decision', title: 'A useful tool asks for broad access.', body: '“Parcel Price Finder” promises automatic delivery discounts.' },
       browser: { location: 'Permission prompt', status: 'Awaiting grant', title: 'The warning is accurate—but abstract.', body: 'Read and change data on shop.example is the capability boundary.' },
       attacker: { location: 'Extension package · v2.4.1', status: 'Publishing', title: 'Useful code wraps a delayed payload.', body: 'The hostile behavior stays dormant until the extension sees a checkout page.', artifact: 'matches: ["*://shop.example/*"]' },
       evidence: [['host permission', 'read + change shop.example', 'browser'], ['trigger', '/checkout', 'attacker'], ['document.cookie', 'HttpOnly hidden', 'secure']]
@@ -102,30 +102,30 @@ const journeyBeats = [
     title: 'Authentication creates a browser capability.',
     thesis: 'A successful login creates reusable proof. Where that proof is stored decides which attacker can steal it—and which can merely ride it.',
     phishing: {
-      maya: { location: 'Lookalike login', status: 'Types credentials', title: 'The password form feels like a normal interruption.', body: 'Maya volunteers email, password, and possibly a one-time code to the attacker origin.' },
-      browser: { location: 'Origin · shop-example.help', status: 'No shop session', title: 'The real shop cookie remains isolated.', body: 'Same-origin policy and cookie scoping still work. The lookalike receives only what Maya submits to it.' },
+      user: { location: 'Lookalike login', status: 'Types credentials', title: 'The password form feels like a normal interruption.', body: 'They volunteer their email, password, and possibly a one-time code to the attacker origin.' },
+      browser: { location: 'Origin · shop-example.help', status: 'No shop session', title: 'The real shop cookie remains isolated.', body: 'Same-origin policy and cookie scoping still work. The lookalike receives only what they submit to it.' },
       attacker: { location: 'Collector → real login', status: 'Credential replay', title: 'Create a new authenticated session.', body: 'The attacker replays the captured credential or relays MFA to shop.example. If login succeeds, the shop issues a separate attacker-controlled session.', artifact: 'Set-Cookie: session=s_attacker' },
-      evidence: [['captured', 'password + optional OTP', 'attacker'], ['Maya shop cookie', 'not exposed', 'secure'], ['attacker session', 'possible after replay', 'attacker']]
+      evidence: [['captured', 'password + optional OTP', 'attacker'], ['their shop cookie', 'not exposed', 'secure'], ['attacker session', 'possible after replay', 'attacker']]
     },
     extension: {
-      maya: { location: 'shop.example/login', status: 'Authenticates normally', title: 'The sign-in is genuine.', body: 'Maya posts credentials to the real shop and completes MFA on the correct origin.' },
+      user: { location: 'shop.example/login', status: 'Authenticates normally', title: 'The sign-in is genuine.', body: 'They post their credentials to the real shop and complete MFA on the correct origin.' },
       browser: { location: 'Cookie jar', status: 'Session established', title: 'The browser stores ambient authority.', body: 'The server returns a Secure, HttpOnly, SameSite cookie. JavaScript cannot read the value, but matching requests receive it automatically.' },
       attacker: { location: 'Content script', status: 'document.cookie blocked', title: 'The token stays hidden; the page stays usable.', body: 'Without the separate cookies permission, this extension cannot extract the HttpOnly value. It can still observe DOM state and ride the authenticated session.', artifact: 'Cookie: session=s_7f2a · hidden from page JS' },
       evidence: [['Set-Cookie', 'Secure · HttpOnly · SameSite=Lax', 'secure'], ['script access', 'cookie value blocked', 'secure'], ['ambient use', 'attached on shop requests', 'browser']]
     }
   },
   {
-    label: 'The arrival', time: 'T − 18 s', progress: 2, focus: 'maya',
-    title: 'Maya sees a checkout. The browser sees a context.',
-    thesis: 'Visual familiarity and technical identity are different signals.',
+    label: 'The arrival', time: 'T − 18 s', progress: 2, focus: 'user',
+    title: 'They see a checkout. The browser checks the web origin.',
+    thesis: 'Matching logos and page design do not establish identity. The URL’s scheme, hostname, and port define the web origin.',
     phishing: {
-      maya: { location: 'Tab · “Shop delivery”', status: 'Believes: shop.example', title: 'The page looks exactly right.', body: 'The cart, total, type, and logo all match the message she expected.' },
-      browser: { location: 'Origin · shop-example.help', status: 'Actually: lookalike', title: 'The address bar tells the quieter story.', body: 'TLS protects this connection to the attacker domain. Cookie host scoping prevents the shop cookie attaching; SOP/CORS govern script access to other origins.' },
-      attacker: { location: 'Collector · listening', status: 'Waiting', title: 'No exploit is needed yet.', body: 'The attacker needs Maya to volunteer data to this origin.', artifact: '200 OK  ·  TLS valid' },
-      evidence: [['seen by Maya', 'Shop checkout', 'maya'], ['actual origin', 'shop-example.help', 'attacker'], ['shop session', 'not attached', 'secure']]
+      user: { location: 'Tab · “Shop delivery”', status: 'Believes: shop.example', title: 'The page looks exactly right.', body: 'The cart, total, type, and logo all match the message they expected.' },
+      browser: { location: 'Origin · shop-example.help', status: 'Actually: lookalike', title: 'The address bar shows the actual hostname.', body: 'The URL is https://shop-example.help, not https://shop.example. TLS encrypts the connection to shop-example.help and validates its certificate for that hostname. The browser does not attach cookies scoped to shop.example.' },
+      attacker: { location: 'Collector · listening', status: 'Waiting', title: 'No exploit is needed yet.', body: 'The attacker needs them to volunteer data to this origin.', artifact: '200 OK  ·  TLS valid' },
+      evidence: [['seen by them', 'Shop checkout', 'user'], ['actual origin', 'shop-example.help', 'attacker'], ['shop session', 'not attached', 'secure']]
     },
     extension: {
-      maya: { location: 'Tab · shop.example/checkout', status: 'Correct destination', title: 'The page really is the shop.', body: 'The address, certificate, and visible checkout are all legitimate.' },
+      user: { location: 'Tab · shop.example/checkout', status: 'Correct destination', title: 'The page really is the shop.', body: 'The address, certificate, and visible checkout are all legitimate.' },
       browser: { location: 'Origin · shop.example', status: 'Extension active', title: 'A second execution context wakes up.', body: 'The granted extension injects a content script next to the page and observes DOM-visible fields.' },
       attacker: { location: 'MV3 extension service worker', status: 'Connected', title: 'The foothold arrived locally.', body: 'Its command channel receives “checkout detected” and returns the collection rule.', artifact: 'event: CHECKOUT_DETECTED' },
       evidence: [['actual origin', 'shop.example', 'secure'], ['isolated content script', 'DOM access', 'attacker'], ['document.cookie', 'HttpOnly hidden', 'secure']]
@@ -136,33 +136,33 @@ const journeyBeats = [
     title: 'One screen. Two different truths underneath.',
     thesis: 'The last trustworthy moment is the one just before intent becomes a request.',
     phishing: {
-      maya: { location: 'Lookalike checkout', status: 'Ready to pay', title: 'RM129 · Pay now', body: 'Maya sees the action she came here to complete.' },
+      user: { location: 'Lookalike checkout', status: 'Ready to pay', title: 'RM129 · Pay now', body: 'They see the action they came here to complete.' },
       browser: { location: 'DOM · hostile origin', status: 'Form target differs', title: 'The button is wired to the collector.', body: 'Typed card and account fields belong to this page. The real shop never receives this click.' },
       attacker: { location: 'Page JavaScript', status: 'Handler armed', title: 'Prevent the normal submit. Keep the illusion.', body: 'The handler copies fields, posts them to /collect, then paints a local success state.', artifact: 'button → capture() → fakeSuccess()' },
-      evidence: [['button label', 'Pay now', 'maya'], ['submit target', '/collect', 'attacker'], ['session cookie', 'absent', 'secure']]
+      evidence: [['button label', 'Pay now', 'user'], ['submit target', '/collect', 'attacker'], ['session cookie', 'absent', 'secure']]
     },
     extension: {
-      maya: { location: 'Legitimate checkout', status: 'Ready to pay', title: 'RM129 · Pay now', body: 'Nothing visible suggests that the page has a second observer.' },
+      user: { location: 'Legitimate checkout', status: 'Ready to pay', title: 'RM129 · Pay now', body: 'Nothing visible suggests that the page has a second observer.' },
       browser: { location: 'DOM · before serialization', status: 'Field mutated', title: 'A DOM value changes behind the surface.', body: 'The extension swaps delivery.account to drop_772. Page code will later serialize the altered value.' },
       attacker: { location: 'Content script', status: 'Hook armed', title: 'Observe the click. Alter only what matters.', body: 'It cannot read the HttpOnly value through page JavaScript, but it can alter a form value that new FormData(form) will serialize.', artifact: 'delivery.account = "drop_772"' },
-      evidence: [['visible total', 'RM129', 'maya'], ['delivery.account', 'drop_772', 'attacker'], ['session cookie', 'HttpOnly · unreadable', 'secure']]
+      evidence: [['visible total', 'RM129', 'user'], ['delivery.account', 'drop_772', 'attacker'], ['session cookie', 'HttpOnly · unreadable', 'secure']]
     }
   },
   {
     label: 'The click', time: 'T = 0 ms', progress: 4, focus: 'split', pulse: true,
-    title: 'Maya supplies intent. The context decides its meaning.',
+    title: 'They supply intent. The context decides its meaning.',
     thesis: 'A click is physical feedback; the security event is the code and origin that receive it.',
     phishing: {
-      maya: { location: 'Lookalike checkout', status: 'Clicks Pay', title: 'The button depresses. Maya is done.', body: 'Her gesture is genuine, but it is addressed to the wrong party.' },
+      user: { location: 'Lookalike checkout', status: 'Clicks Pay', title: 'The button depresses. They are done.', body: 'Their gesture is genuine, but it is addressed to the wrong origin.' },
       browser: { location: 'Event loop · hostile tab', status: 'submit intercepted', title: 'click → listener → fetch()', body: 'The browser correctly executes attacker-owned JavaScript for shop-example.help.' },
       attacker: { location: 'Collector endpoint', status: 'Inbound', title: 'The volunteered fields cross the wire.', body: 'No shop cookie crosses origins. The captured credentials and form data do.', artifact: 'POST shop-example.help/collect' },
-      evidence: [['gesture', 'trusted human click', 'maya'], ['receiver', 'hostile event listener', 'attacker'], ['request origin', 'shop-example.help', 'browser']]
+      evidence: [['gesture', 'trusted human click', 'user'], ['receiver', 'hostile event listener', 'attacker'], ['request origin', 'shop-example.help', 'browser']]
     },
     extension: {
-      maya: { location: 'Legitimate checkout', status: 'Clicks Pay', title: 'The button depresses. Maya is done.', body: 'Her gesture is genuine and occurs on the intended site.' },
+      user: { location: 'Legitimate checkout', status: 'Clicks Pay', title: 'The button depresses. They are done.', body: 'Their gesture is genuine and occurs on the intended site.' },
       browser: { location: 'Page + extension contexts', status: 'Two flows begin', title: 'One click wakes two listeners.', body: 'The shop builds its checkout request. The content script separately sends DOM-visible data to its MV3 service worker.' },
       attacker: { location: 'MV3 extension service worker', status: 'Outbound queued', title: 'Ambient access turns into action.', body: 'The extension does not need the cookie value: the legitimate browser request already carries it to the shop.', artifact: 'shop fetch()  +  runtime.sendMessage()' },
-      evidence: [['gesture', 'trusted human click', 'maya'], ['shop request', 'cookie auto-attached', 'browser'], ['extension copy', 'DOM fields', 'attacker']]
+      evidence: [['gesture', 'trusted human click', 'user'], ['shop request', 'cookie auto-attached', 'browser'], ['extension copy', 'DOM fields', 'attacker']]
     }
   },
   {
@@ -170,64 +170,47 @@ const journeyBeats = [
     title: 'The browser does exactly what each context permits.',
     thesis: 'Compromise is often two valid mechanisms composed into an invalid outcome.',
     phishing: {
-      maya: { location: 'Waiting for confirmation', status: 'No warning', title: 'A spinner makes the pause feel ordinary.', body: 'The interface buys enough time to collect and relay what Maya entered.' },
-      browser: { location: 'Network · attacker origin', status: 'Encrypted outbound', title: 'The payload is protected in transit.', body: 'TLS makes theft private between Maya and the attacker. It does not certify business identity.' },
-      attacker: { location: 'Collector + real shop', status: 'Relaying', title: 'Captured credentials start a separate session.', body: 'The attacker can attempt a real login or purchase flow with the volunteered data; they never inherit Maya’s shop cookie by magic.', artifact: 'collector → separate login attempt' },
+      user: { location: 'Waiting for confirmation', status: 'No warning', title: 'A spinner makes the pause feel ordinary.', body: 'The interface buys enough time to collect and relay what they entered.' },
+      browser: { location: 'Network · attacker origin', status: 'Encrypted outbound', title: 'The payload is protected in transit.', body: 'TLS makes theft private between them and the attacker. It does not certify business identity.' },
+      attacker: { location: 'Collector + real shop', status: 'Relaying', title: 'Captured credentials start a separate session.', body: 'The attacker can attempt a real login or purchase flow with the volunteered data; they never inherit their shop cookie by magic.', artifact: 'collector → separate login attempt' },
       evidence: [['TLS', 'valid', 'browser'], ['shop cookie', 'never exposed', 'secure'], ['captured data', 'credentials + form', 'attacker']]
     },
     extension: {
-      maya: { location: 'Waiting for confirmation', status: 'No warning', title: 'The real checkout continues normally.', body: 'The compromise does not need to break the happy path.' },
+      user: { location: 'Waiting for confirmation', status: 'No warning', title: 'The real checkout continues normally.', body: 'The compromise does not need to break the happy path.' },
       browser: { location: 'Network · two destinations', status: 'Fan-out', title: 'The same moment produces two requests.', body: 'POST /api/checkout goes to shop.example with ambient credentials; copied fields go to the extension collector.' },
       attacker: { location: 'Collector · remote', status: 'Data received', title: 'Local privilege crosses into remote control.', body: 'The attacker receives the altered delivery account and DOM-visible order details.', artifact: 'POST collector.invalid/events' },
       evidence: [['shop request', 'session=s_7f2a', 'browser'], ['cart body', 'delivery=drop_772', 'attacker'], ['exfil request', 'no HttpOnly cookie', 'secure']]
     }
   },
   {
-    label: 'The privilege gap', time: 'T + 31 ms', progress: 5, focus: 'attacker',
-    title: 'Same symptom. Different powers.',
-    thesis: 'Do not name the attack first. Ask where the attacker runs, what power they gain, and which trust promise actually breaks.',
-    phishing: {
-      maya: { location: 'Attacker-owned origin', status: 'Social trust bypassed', title: 'The exploit is the destination decision.', body: 'Maya gave data to the wrong principal. The browser enforced its origin model correctly.' },
-      browser: { location: 'Policy boundaries', status: 'SOP still intact', title: 'No browser sandbox was bypassed.', body: 'CORS is irrelevant to data submitted to the attacker. CSRF defenses protect shop actions, not secrets typed into a lookalike.' },
-      attacker: { location: 'Collector + replay client', status: 'New capabilities', title: 'Reusable secrets become a separate identity.', body: 'The attacker gains credentials, typed checkout data, and possibly a fresh shop session after replay—not Maya’s original HttpOnly cookie.', artifact: 'credential theft ≠ cookie theft ≠ CSRF' },
-      evidence: [['bypassed', 'human origin verification', 'attacker'], ['still enforced', 'SOP · cookie scoping', 'secure'], ['follow-on', 'credential replay / MFA relay', 'attacker']]
-    },
-    extension: {
-      maya: { location: 'Trusted shop UI', status: 'UI integrity lost', title: 'Authentication succeeded exactly as designed.', body: 'The harmful request uses Maya’s real session and a real user gesture.' },
-      browser: { location: 'Page + extension worlds', status: 'Granted local capability', title: 'The extension composes two legitimate channels.', body: 'The page sends an authenticated shop request. The extension service worker sends a separate exfiltration request under extension permissions.' },
-      attacker: { location: 'Remote collector', status: 'Authority without token theft', title: 'The attacker rides the session and steals context.', body: 'They bypass client-side UI integrity and any assumption that a valid session proves unmodified intent. HttpOnly still prevents reading the cookie string.', artifact: 'authenticated action + out-of-band exfiltration' },
-      evidence: [['bypassed', 'trusted-client assumption', 'attacker'], ['still enforced', 'HttpOnly cookie secrecy', 'secure'], ['server gap', 'recipient not re-authorized', 'attacker']]
-    }
-  },
-  {
-    label: 'The two receipts', time: 'T + 214 ms', progress: 6, focus: 'split',
-    title: 'Success for Maya can also be success for the attacker.',
+    label: 'The two receipts', time: 'T + 214 ms', progress: 5, focus: 'split',
+    title: 'Success for them can also be success for the attacker.',
     thesis: 'The absence of friction is not evidence that the system stayed whole.',
     phishing: {
-      maya: { location: 'Lookalike confirmation', status: 'Sees: Payment received', title: 'A receipt appears on schedule.', body: 'It is a local animation, not proof that the shop accepted anything.' },
+      user: { location: 'Lookalike confirmation', status: 'Sees: Payment received', title: 'A receipt appears on schedule.', body: 'It is a local animation, not proof that the shop accepted anything.' },
       browser: { location: 'Hostile tab · no navigation', status: 'Paint complete', title: 'The browser paints what the origin tells it.', body: 'There is no trusted receipt identifier from shop.example to bind this surface to a real order.' },
       attacker: { location: 'Collector dashboard', status: 'Capture complete', title: 'A second receipt records the theft.', body: 'The attacker has the submitted data and a timestamped victim event.', artifact: 'capture_7F2A  ·  200 OK' },
-      evidence: [['Maya sees', 'Payment received', 'maya'], ['trusted order ID', 'missing', 'attacker'], ['attacker sees', 'capture complete', 'attacker']]
+      evidence: [['they see', 'Payment received', 'user'], ['trusted order ID', 'missing', 'attacker'], ['attacker sees', 'capture complete', 'attacker']]
     },
     extension: {
-      maya: { location: 'Real shop confirmation', status: 'Sees: Payment received', title: 'The receipt is genuine.', body: 'Her payment completed, so the experience gives her no reason to investigate.' },
+      user: { location: 'Real shop confirmation', status: 'Sees: Payment received', title: 'The receipt is genuine.', body: 'Their payment completed, so the experience gives them no reason to investigate.' },
       browser: { location: 'shop.example + extension', status: 'Both complete', title: 'The good and bad outcomes coexist.', body: 'A 200 response validates processing, not the provenance of every client-controlled field.' },
       attacker: { location: 'Drop account · drop_772', status: 'Order redirected', title: 'The attacker’s state changed too.', body: 'The manipulated delivery value survived because the server trusted a browser-owned invariant.', artifact: 'delivery.account → drop_772' },
       evidence: [['shop response', '200 · ord_8821', 'secure'], ['delivery owner', 'not reverified', 'attacker'], ['attacker sees', 'order redirected', 'attacker']]
     }
   },
   {
-    label: 'The rewind', time: 'T ↶', progress: 6, focus: 'browser', controls: true,
+    label: 'The rewind', time: 'T ↶', progress: 5, focus: 'browser', controls: true,
     title: 'Stop the chain where the truth first diverges.',
-    thesis: 'Good controls do not ask Maya to become a security engine. They remove attacker leverage at the boundary.',
+    thesis: 'Good controls do not ask them to become a security engine. They remove attacker leverage at the boundary.',
     phishing: {
-      maya: { location: 'Before the lure', status: 'Protected by context', title: 'Make destination identity hard to miss.', body: 'Password-manager origin binding and trusted navigation remove the lookalike’s strongest illusion.' },
+      user: { location: 'Before the lure', status: 'Protected by context', title: 'Make destination identity hard to miss.', body: 'Password-manager origin binding and trusted navigation remove the lookalike’s strongest illusion.' },
       browser: { location: 'Origin boundary', status: 'Divergence visible', title: 'Bind secrets and proof to the real origin.', body: 'Passkeys resist credential relay; a shop-issued receipt must carry a verifiable order ID.' },
       attacker: { location: 'Lookalike origin', status: 'Capability reduced', title: 'The clone can copy pixels, not origin-bound proof.', body: 'The attacker is left with a convincing page that cannot obtain reusable authentication material.', artifact: 'PASSKEY ORIGIN MISMATCH' },
       evidence: [['01', 'Password manager will not fill', 'secure'], ['02', 'Passkey checks origin', 'secure'], ['03', 'Receipt verified with shop', 'secure']]
     },
     extension: {
-      maya: { location: 'Permission decision', status: 'Least access', title: 'Make broad capability exceptional.', body: 'Use-on-click access and permission reviews shorten the time hostile code can inhabit a trusted page.' },
+      user: { location: 'Permission decision', status: 'Least access', title: 'Make broad capability exceptional.', body: 'Use-on-click access and permission reviews shorten the time hostile code can inhabit a trusted page.' },
       browser: { location: 'Client + server boundary', status: 'Invariant restored', title: 'Treat extension-altered data as untrusted.', body: 'Re-derive account ownership server-side, require confirmation for sensitive changes, and monitor extension risk.' },
       attacker: { location: 'Extension context', status: 'Blocked at server', title: 'DOM control no longer grants domain authority.', body: 'Even a hostile local script cannot redirect delivery without fresh, server-verified intent.', artifact: '403 · RECIPIENT_REVERIFY' },
       evidence: [['01', 'Narrow site permission', 'secure'], ['02', 'Server owns recipient', 'secure'], ['03', 'Step-up on sensitive change', 'secure']]
@@ -249,7 +232,7 @@ const checkpoints = [
       { label: 'Body', values: ['cart_1042 · RM129', 'cart_1042 · RM129', 'cart_1042 · RM129'] }
     ],
     phases: [
-      { title: 'The session cookie identifies Maya’s session.', body: 'The cookie does not prove that Maya approved this payment.', signal: 'Claim: identity and intent', result: 'CLAIMS NOT VERIFIED' },
+      { title: 'The session cookie identifies their session.', body: 'The cookie does not prove that they approved this payment.', signal: 'Claim: identity and intent', result: 'CLAIMS NOT VERIFIED' },
       { title: 'A hostile page sends the request.', body: 'A CSRF attack uses cookies that the browser adds automatically. An XSS attack runs a malicious script with the user’s permissions.', signal: 'Attack: false intent', result: 'REQUEST FORGED' },
       { title: 'Verify the source and intent.', body: 'Verify the Origin header and a CSRF token that is bound to the session. Use a SameSite cookie as an additional control. Prevent script injection with correct output encoding and a strict CSP.', signal: 'Control: browser and server', result: 'INTENT VERIFIED', actions: ['SameSite cookie', 'Origin + CSRF token', 'Output encoding + strict CSP'] }
     ],
@@ -259,7 +242,7 @@ const checkpoints = [
     label: 'The edge', zone: 'edge', time: '31.700 ms', minutes: 2.5, lenses: ['A02', 'A04'],
     title: 'TLS protects data in transit.',
     thesis: 'TLS prevents a network observer from reading or changing the data. TLS does not verify the sender or the edge configuration.',
-    prompt: 'What does the TLS padlock verify? What does it not verify?',
+    prompt: 'What does the browser’s HTTPS indicator confirm about the connection and certificate? What application checks are still required?',
     packet: [
       { label: 'TLS', values: ['1.3 · certificate valid', '1.3 · certificate valid', '1.3 + HSTS'] },
       { label: 'Host', values: ['shop.example', 'admin.shop.example', 'shop.example · allow-listed'] },
@@ -272,23 +255,23 @@ const checkpoints = [
       { title: 'The edge configuration allows unsafe access.', body: 'A public debug route, a broad origin policy, or a false proxy header can bypass application controls.', signal: 'Attack: unsafe access', result: 'EDGE CONFIGURATION FAILED' },
       { title: 'Allow only required access.', body: 'Use approved configurations. Define the allowed routes, origins, and proxies. Use current TLS and HSTS.', signal: 'Control: limit access', result: 'EDGE POLICY PASSED', actions: ['Allowed routes', 'Allowed origins', 'Trusted proxies'] }
     ],
-    note: 'Do not describe the WAF as a complete control. The edge can block known bad traffic and enforce the transport policy. The application must decide if Maya can buy the cart.'
+    note: 'Do not describe the WAF as a complete control. The edge can block known bad traffic and enforce the transport policy. The application must decide if they can buy the cart.'
   },
   {
     label: 'The API gate', zone: 'api', time: '64.200 ms', minutes: 3, lenses: ['A01', 'A07'],
     title: 'Authenticate the user. Authorize the action.',
     thesis: 'A valid session identifies the user. It does not give the user access to every action or object.',
-    prompt: 'Where must the system verify that Maya owns the cart?',
+    prompt: 'Where must the system verify that they own the cart?',
     packet: [
-      { label: 'session.user', values: ['maya', 'maya', 'maya'] },
+      { label: 'session.user', values: ['user', 'user', 'user'] },
       { label: 'action', values: ['checkout', 'checkout', 'checkout'] },
       { label: 'cartId', values: ['cart_1042', 'cart_1043', 'cart_1043'] },
-      { label: 'cart.owner', values: ['maya', 'devon', 'devon'] },
+      { label: 'cart.owner', values: ['user', 'devon', 'devon'] },
       { label: 'decision', values: ['not checked', '200 OK', '403 + req_7F2A'] }
     ],
     phases: [
-      { title: 'Maya has a valid session.', body: 'Authentication identifies Maya. The server must also verify that Maya can check out this cart.', signal: 'Claim: session is valid', result: 'IDENTITY KNOWN' },
-      { title: 'The attacker changes the cart ID.', body: 'The server does not check the cart owner. As a result, Maya’s session can access Devon’s cart.', signal: 'Attack: cart_1042 → cart_1043', result: 'DEVON’S CART EXPOSED' },
+      { title: 'They have a valid session.', body: 'Authentication identifies them. The server must also verify that they can check out this cart.', signal: 'Claim: session is valid', result: 'IDENTITY KNOWN' },
+      { title: 'The attacker changes the cart ID.', body: 'The server does not check the cart owner. As a result, their session can access Devon’s cart.', signal: 'Attack: cart_1042 → cart_1043', result: 'DEVON’S CART EXPOSED' },
       { title: 'Check the user, action, and object.', body: 'Authorize every request on the server. Deny access by default. Test all expected access decisions.', signal: 'Control: object authorization', result: '403 FORBIDDEN', actions: ['Deny by default', 'Check ownership', 'Test access rules'] }
     ],
     note: 'Pause after you show the attack. A predictable ID is not the main cause. A random ID can make discovery more difficult. Only server-side authorization prevents the access.'
@@ -390,26 +373,175 @@ const checkpoints = [
   }
 ];
 
+const reflectionCheckpoints = [
+  {
+    ...checkpoints[0], label: 'Browser threats', minutes: 3.5,
+    title: 'Match the control to the browser threat.',
+    thesis: 'A session cookie proves identity, not intent.',
+    prompt: 'Where does the attacker run, and what can they access?',
+    phases: [
+      { title: 'Cookies are ambient authority.', body: 'The browser can attach them without a deliberate user action.', signal: 'Claim: session = intent', result: 'IDENTITY ONLY' },
+      { title: 'CSRF sends; XSS reads and acts.', body: 'CSRF is cross-origin. XSS executes inside the trusted origin.', signal: 'Attack: different capabilities', result: 'CONTEXT COMPROMISED' },
+      { title: 'Use threat-specific controls.', body: 'CSRF: token, Origin, SameSite. XSS: contextual encoding, safe DOM APIs, then CSP.', signal: 'Control: match mechanism', result: 'CONTEXT VERIFIED', actions: ['CSRF token + Origin', 'Safe DOM + encoding', 'CSP defense-in-depth'] }
+    ],
+    note: 'Key takeaway: authentication never replaces authorization or request-context checks.'
+  },
+  {
+    ...checkpoints[1], label: 'Transport and edge', minutes: 3,
+    thesis: 'TLS protects the channel—not the application.',
+    prompt: 'What remains untrusted after TLS succeeds?',
+    packet: checkpoints[1].packet.map(line => line.label === 'CORS' ? { ...line, values: ['shop.example', 'Origin reflected + credentials', 'explicit origins'] } : line),
+    phases: [
+      { title: 'TLS secures data in transit.', body: 'It authenticates the hostname and prevents network tampering.', signal: 'Claim: protected channel', result: 'TLS OK' },
+      { title: 'HTTPS can still serve an unsafe app.', body: 'Lookalikes, debug routes, bad CORS, and spoofed proxy headers remain possible.', signal: 'Attack: valid channel, unsafe service', result: 'EDGE POLICY FAILED' },
+      { title: 'Constrain the edge.', body: 'Use HSTS, route and CORS allow-lists, and trusted proxy chains.', signal: 'Control: explicit policy', result: 'EDGE POLICY PASSED', actions: ['TLS + HSTS', 'Explicit CORS origins', 'Trusted proxies'] }
+    ],
+    note: 'Key takeaway: HTTPS does not prove user intent, authorization, or valid input.'
+  },
+  {
+    ...checkpoints[2], label: 'Application decisions', minutes: 4, lenses: ['A01', 'A05', 'A07'],
+    title: 'Make four separate server decisions.',
+    thesis: 'Identify. Authorize. Validate. Keep data out of code.',
+    prompt: 'Which check fails first?',
+    packet: [
+      { label: 'identity', values: ['session.user = user', 'session.user = user', 'session.user = user · rotated'] },
+      { label: 'action', values: ['checkout', 'checkout cart_1043', 'checkout cart_1043'] },
+      { label: 'ownership', values: ['not checked', 'owner = devon', 'owner = devon · denied'] },
+      { label: 'coupon', values: ['WELCOME10', "x\' OR \'1\'=\'1", "parameter: x\' OR \'1\'=\'1"] },
+      { label: 'decision', values: ['claims pending', 'access + query unsafe', '403 · parameterized'] }
+    ],
+    phases: [
+      { title: 'A session answers only “who?”', body: 'It does not grant every action or object.', signal: 'Claim: authenticated = allowed', result: 'AUTHZ REQUIRED' },
+      { title: 'Valid input can still be dangerous.', body: 'Wrong object access breaks authorization; concatenated input becomes SQL.', signal: 'Attack: object + injection', result: 'TWO CHECKS FAILED' },
+      { title: 'Enforce every decision server-side.', body: 'Deny by default, check ownership, validate formats, and parameterize queries.', signal: 'Control: explicit decisions', result: '403 · INPUT STAYS DATA', actions: ['Object authorization', 'Parameterized APIs', 'Contextual encoding'] }
+    ],
+    note: 'Key takeaway: authentication, authorization, validation, and encoding are different controls.'
+  },
+  {
+    ...checkpoints[4], label: 'Data and business integrity', minutes: 4, lenses: ['A04', 'A06', 'A08'],
+    title: 'The server owns business-critical values.',
+    thesis: 'Valid JSON can still violate price, ownership, state, or replay rules.',
+    prompt: 'Which values must the server derive?',
+    packet: [
+      { label: 'clientTotal', values: ['129.00', '1.00', 'ignored'] },
+      { label: 'catalogTotal', values: ['not loaded', 'not loaded', '129.00'] },
+      { label: 'recipient', values: ['user_home', 'drop_772', 'owner verified'] },
+      { label: 'db role', values: ['app_owner', 'all tables + writes', 'checkout_writer'] },
+      { label: 'repeat', values: ['ik_7f2a', 'replayed ×12', 'seen · no-op'] }
+    ],
+    phases: [
+      { title: 'Schema-valid is not business-valid.', body: 'Price, recipient, state, and replay rules belong to the server.', signal: 'Claim: valid JSON = valid action', result: 'RULES UNCHECKED' },
+      { title: 'Small changes create real loss.', body: 'An attacker changes the price, recipient, or repeats the request.', signal: 'Attack: valid but harmful values', result: 'INTEGRITY FAILED' },
+      { title: 'Re-derive and contain.', body: 'Use server state, idempotency, narrow database roles, and minimal stored data.', signal: 'Control: invariants + least privilege', result: 'RM129 · ONCE · LIMITED', actions: ['Server-owned values', 'Idempotency', 'Least privilege'] }
+    ],
+    note: 'Key takeaway: never trust the client with business invariants.'
+  },
+  {
+    ...checkpoints[6], label: 'Resilience and operations', minutes: 4, lenses: ['A09', 'A10'],
+    title: 'Design the failure path.',
+    thesis: 'Failures must be bounded, observable, and recoverable.',
+    prompt: 'What happens when payment state is uncertain?',
+    packet: [
+      { label: 'dependency', values: ['risk pending', 'timeout', 'timeout · bounded'] },
+      { label: 'state', values: ['unspecified', 'charge ✓ · order ✕', 'atomic · review'] },
+      { label: 'client', values: ['Error', 'stack + SQL', 'Payment pending · req_7F2A'] },
+      { label: 'evidence', values: ['console.log', 'token + stack', 'structured · redacted'] },
+      { label: 'response', values: ['no owner', 'no alert', 'owner paged · runbook'] }
+    ],
+    phases: [
+      { title: 'Failure behavior needs a policy.', body: 'Define timeout, retry, and partial-write outcomes before production.', signal: 'Claim: happy path is enough', result: 'POLICY REQUIRED' },
+      { title: 'Unsafe fallback multiplies harm.', body: 'Approve-on-error, endless retries, and leaked logs turn faults into incidents.', signal: 'Attack: induce failure', result: 'FAILURE AMPLIFIED' },
+      { title: 'Contain and recover.', body: 'Use bounded retries, atomic state, request IDs, redacted logs, alerts, and a runbook.', signal: 'Control: operational readiness', result: 'HELD · ALERTED · RECOVERABLE', actions: ['Safe failure state', 'Correlated evidence', 'Owned runbook'] }
+    ],
+    note: 'Key takeaway: every alert needs a threshold, owner, and response.'
+  }
+];
+
 const quiz = [
-  { question: 'Maya has a valid session. Cart cart_1043 belongs to Devon. Which control prevents access?', choices: ['Use random IDs', 'Check the user, action, and object', 'Hide the cart ID'], right: 1, why: 'The server must verify that Maya can check out cart_1043.' },
-  { question: 'The risk service stops after the card charge but before the order write. Which control is required?', choices: ['Use a longer timeout', 'Use atomic writes and a safe failure policy', 'Return more error details'], right: 1, why: 'The system needs atomic or recoverable writes. It also needs a defined safe state.' },
-  { question: 'A request uses TLS and valid JSON. Is the request trusted?', choices: ['Yes, because both checks passed', 'Yes, if a WAF accepts it', 'No, because these checks do not prove access or intent'], right: 2, why: 'Each component must verify the claims that it uses.' }
+  { question: 'A hostile site submits a credentialed request but cannot read the response. Which threat best matches?', choices: ['CSRF', 'XSS', 'TLS downgrade'], right: 0, why: 'CSRF abuses ambient authority across origins. Origin and token checks, supported by SameSite and Fetch Metadata, address that context.' },
+  { question: 'Hostile script executes inside shop.example and reads the response. Which foundation prevents this?', choices: ['CORS alone', 'Contextual output encoding and safe DOM APIs', 'A random session ID'], right: 1, why: 'XSS executes in the trusted origin. Safe output handling is foundational; CSP and Trusted Types add defense-in-depth.' },
+  { question: 'They have a valid session. Cart cart_1043 belongs to Devon. Which control prevents access?', choices: ['Use random IDs', 'Check the user, action, and object', 'Hide the cart ID'], right: 1, why: 'The server must authorize their action on cart_1043.' },
+  { question: 'The risk service stops after the card charge but before the order write. Which control is required?', choices: ['Use a longer timeout', 'Use atomic or recoverable writes and a safe failure policy', 'Return more error details'], right: 1, why: 'The system needs consistent state and a defined safe outcome.' },
+  { question: 'A request uses TLS and valid JSON. Is the request trusted?', choices: ['Yes, because both checks passed', 'Yes, if a WAF accepts it', 'No; neither proves authorization, intent, or business validity'], right: 2, why: 'TLS protects the channel and JSON proves syntax. Each component must still verify the claims it uses.' }
 ];
 
 const journeyNotes = {
-  'The sign-in': 'Separate the browser cookie jars aloud. In phishing, Maya submits reusable proof to the collector; an optional server-side replay may create session=s_attacker in the attacker client. In the extension path, the real shop rotates Maya’s session and sets an HttpOnly cookie. Use the storage switcher to emphasize that JWT is a format—storage and attachment define XSS and CSRF exposure.',
-  'Under the hood': 'Open each envelope. Collector and replay are separate requests; only replay reaches the shop. In the extension path, Request A passes authentication and CSRF but contains an attacker-chosen recipient. Request B is independent exfiltration through the extension worker. Ask which server invariant failed.',
-  'The privilege gap': 'Use the four tabs to prevent vocabulary collapse. Phishing defeats human origin verification; CSRF abuses ambient credentials; XSS runs in the trusted origin; the extension exercises an installed capability grant. Read “actually bypassed” and “not bypassed” together.'
+  'The sign-in': 'Separate the browser cookie jars aloud. In phishing, they submit reusable proof to the collector; an optional server-side replay may create session=s_attacker in the attacker client. In the extension path, the real shop rotates their session and sets an HttpOnly cookie. Use the storage switcher to emphasize that JWT is a format—storage and attachment define XSS and CSRF exposure.',
+  'Under the hood': 'Open each envelope. Collector and replay are separate requests; only replay reaches the shop. In the extension path, Request A passes authentication and CSRF but contains an attacker-chosen recipient. Request B is independent exfiltration through the extension worker. Ask which server invariant failed.'
 };
-const journeyScenes = journeyBeats.map((item, index) => ({ ...item, type: 'journey', zone: `journey-${index + 1}`, minutes: item.label === 'The sign-in' || item.label === 'The privilege gap' ? 2.5 : 1.5, note: journeyNotes[item.label] || `Let the ${item.label.toLowerCase()} visual complete before explaining it. Point to the colored route or highlighted object first; use the evidence chips only to confirm what the audience has already seen.` }));
+const journeyScenes = journeyBeats.map((item, index) => ({ ...item, type: 'journey', zone: `journey-${index + 1}`, minutes: item.label === 'The sign-in' ? 2.5 : 1.5, note: journeyNotes[item.label] || `Let the ${item.label.toLowerCase()} visual complete before explaining it. Point to the colored route or highlighted object first; use the evidence chips only to confirm what the audience has already seen.` }));
+
+const foundations = [
+  {
+    label: 'The rabbit hole', zone: 'pki-goal', visual: 'goal', time: 'one sentence', minutes: 2,
+    eyebrow: 'Certificate foundation · 01', title: 'Certificates and PKI are hard. The core idea is not.',
+    thesis: 'The math is complicated and the standards are stupidly baroque. Still, the goal fits in one sentence: bind names to public keys. That’s it. The rest is implementation details.',
+    footer: ['THE WHOLE PLOT', 'NAME  ↔  PUBLIC KEY'],
+    note: 'Let the equation land before adding terminology. PKI is powerful because this binding gives code, people, and devices a portable identity—without making the network itself the security boundary.'
+  },
+  {
+    label: 'Names and claims', zone: 'pki-identity', visual: 'identity', time: 'who is who', minutes: 3,
+    eyebrow: 'Certificate foundation · 02', title: 'An entity has an identity. A name only points at it.',
+    thesis: 'Your laptop, some code, you, and the burrito you ate for lunch are all entities. An identifier names one. An entity can claim that name; authentication is the process of checking whether the claim is true.',
+    footer: ['VOCABULARY', 'entity → identity → name → claim → authentication'],
+    note: 'Keep identity and identifier separate. Then name the PKI roles: the subscriber is named by a certificate, the CA issues it, and the relying party decides whether to trust it.'
+  },
+  {
+    label: 'From secrets to signatures', zone: 'pki-signatures', visual: 'signatures', time: 'proving authorship', minutes: 3,
+    eyebrow: 'Certificate foundation · 03', title: 'MACs authenticate stuff. Signatures change who can prove what.',
+    thesis: 'A MAC uses a shared secret, so either party could have made it. A signature uses a key pair: only the private-key holder can sign, while anyone with the public key can verify.',
+    footer: ['IMPORTANT', 'Do not invent your own MAC. Use HMAC. Keep private keys private.'],
+    note: 'Use the split diagram to show the asymmetry. A public key verifies but cannot forge. That tighter control is the useful difference, not merely a fancier hash.'
+  },
+  {
+    label: 'Computers can see', zone: 'pki-vision', visual: 'vision', time: 'challenge → proof', minutes: 3,
+    eyebrow: 'Certificate foundation · 04', title: 'Public key cryptography lets computers see.',
+    thesis: 'If I know your public key, I can ask you to sign a fresh random challenge. A valid signature is good evidence that I am talking to whoever holds the matching private key—without the private key ever crossing the network.',
+    footer: ['TWO POWERS', 'public encrypts → private decrypts · private signs → public verifies'],
+    note: 'Play this like vision across a network: knowing what someone looks like lets you recognize them, but it does not let you shape-shift into them. Thanks, math.'
+  },
+  {
+    label: 'What a certificate is', zone: 'pki-certificate', visual: 'certificate', time: 'the missing public key', minutes: 3,
+    eyebrow: 'Certificate foundation · 05', title: 'A certificate is a driver’s license for computers and code.',
+    thesis: 'What if you do not already know Bob’s public key? A certificate contains a name and public key, plus the issuer’s signature. Read it as: “This issuer says this is Bob’s public key.”',
+    footer: ['FUNDAMENTALLY', 'A signed thing that binds a public key to a name.'],
+    note: 'Trust does the work. If the relying party knows and trusts the issuer’s public key, it can verify the claim and learn Bob’s public key. Expiry and usage constraints are extra fields; they do not change the core idea.'
+  },
+  {
+    label: 'The format pile', zone: 'pki-formats', visual: 'formats', time: 'annoying, not impossible', minutes: 3,
+    eyebrow: 'Certificate foundation · 06', title: 'X.509, ASN.1, DER, PEM, PKCS. Oh my.',
+    thesis: 'This part actually is annoyingly complicated. X.509 defines the certificate, ASN.1 describes its data, DER turns it into binary, and PEM wraps that binary in copy-pasteable Base64. PKCS formats are envelopes around certificates and keys.',
+    footer: ['TRANSLATION', 'definition → binary encoding → text wrapper → optional envelope'],
+    note: 'Do not teach every OID. Teach the layers. PKCS#7 can carry certificate chains; PKCS#12 can also carry a private key. If the file extensions and labels feel inconsistent, it is not you. It is the world.'
+  },
+  {
+    label: 'Trust and chains', zone: 'pki-trust', visual: 'trust', time: 'who vouches for whom', minutes: 4,
+    eyebrow: 'Certificate foundation · 07', title: 'Every trust chain ends in meatspace.',
+    thesis: 'Relying parties start with root certificates already in a trust store. Roots sign intermediates; intermediates sign leaf certificates. The leaf and intermediates travel together. The trusted root usually does not.',
+    footer: ['DO NOT', 'Disable certificate path validation. Encryption without authentication is pretty worthless.'],
+    note: 'Walk upward from leaf to root. Validation checks hostname, signatures, dates, constraints, and relevant policy. A self-signed root is trusted because of how it reached the trust store—not because self-signing is magical.'
+  },
+  {
+    label: 'Certificate lifecycle', zone: 'pki-lifecycle', visual: 'lifecycle', time: 'automate the boring parts', minutes: 4,
+    eyebrow: 'Certificate foundation · 08', title: 'Issue short. Renew automatically. Never ship the private key.',
+    thesis: 'The subscriber generates its own key pair, sends a signed CSR, proves the name, and receives a certificate. Certificates expire, so renewal really means replacement. If that hurts, do it more: short lifetimes force the process to become automation.',
+    footer: ['REMEMBER', 'Use SANs · automate renewal · prefer short-lived certificates · validate every path'],
+    note: 'Finish on the usable operating model. The private key stays with the subscriber. The CA proves control of the name. Short-lived certificates make passive revocation practical, but require synchronized clocks and reliable renewal.'
+  }
+];
+
 const scenes = [
-  { type: 'opening', section: 'journey', label: 'Case open', zone: 'open', time: 'before the click', minutes: 1.5, note: 'Open with the central question: “When Maya clicks Pay, whose code receives her intent?” Let the audience choose which compromise path to trace first.' },
+  ...foundations.map(item => ({ ...item, type: 'foundation', section: 'journey' })),
+  { type: 'pki-bridge', section: 'journey', label: 'Beyond the handshake', zone: 'pki-to-app', time: 'connection established', minutes: 2, note: 'Use this as the handoff from certificates to application security. A certificate authenticates a name and TLS protects the channel. Neither proves that the person intended this origin, that local code is honest, or that the resulting request is authorized and valid.' },
+  { type: 'opening', section: 'journey', label: 'Case open', zone: 'open', time: 'before the click', minutes: 1.5, note: 'Now open the concrete case: “The connection is protected. When they click Pay, whose code receives their intent?” Let the audience choose which compromise path to trace first.' },
   { type: 'recon', section: 'journey', label: 'Recon workbench', zone: 'recon', time: 'T − 24 h', minutes: 4, note: 'Let the room choose commands. Each result is simulated and intentionally harmless: the point is how small public clues compose into an attack plan. After three clues, ask which exposure they would fix first—and which one is merely information, not a vulnerability by itself.' },
   ...journeyScenes.map(item => ({ ...item, section: 'journey' })),
-  { type: 'bridge', section: 'reflections', label: 'What we learned', zone: 'reflect', time: 'rewind complete', minutes: 1.5, note: 'The audience has seen the incident. The next scenes follow the request through eight system boundaries. At each boundary, identify the claim, the attack, and the control.' },
-  ...checkpoints.map(item => ({ ...item, type: 'checkpoint', section: 'reflections' })),
-  { type: 'quiz', section: 'reflections', label: 'Field test', zone: 'replay', time: 'replay', minutes: 3, note: 'Ask the audience to vote before you select an answer. Ask them to explain the reason. First, find the boundary. Then identify the claim and select the control.' },
-  { type: 'closing', section: 'reflections', label: 'Case closed', zone: 'closed', time: 'complete', minutes: 2, note: 'Review the five questions. Ask each person to select one production request this week. Ask their team to draw each boundary and its verification step.' }
+  { type: 'bridge', section: 'reflections', label: 'What we learned', zone: 'reflect', time: 'rewind complete', minutes: 1.5, note: 'The audience has seen the incident. The next five lessons apply the same claim → attack → control method across the system.' },
+  ...reflectionCheckpoints.map(item => ({ ...item, type: 'checkpoint', section: 'reflections' })),
+  { type: 'quiz', section: 'reflections', label: 'Field test', zone: 'replay', time: 'replay', minutes: 4, note: 'Ask the audience to vote before selecting an answer. Have them name the attacker context, failed claim, and restoring control.' },
+  { type: 'lifecycle', section: 'reflections', label: 'Security lifecycle', zone: 'lifecycle', time: 'continuous', minutes: 2.5, note: 'Security is a product and operational practice, not a final penetration test. Assign ownership and evidence to every stage.' },
+  { type: 'appendix', section: 'reflections', label: 'Future deep dives', zone: 'appendix', time: 'placeholder', minutes: 1, note: 'This is a roadmap placeholder only. Use it to acknowledge important topics that deserve their own optional modules rather than rushing through them.' },
+  { type: 'closing', section: 'reflections', label: 'Case closed', zone: 'closed', time: 'complete', minutes: 2, note: 'Review the six questions. Ask each person to select one production request this week and draw each boundary and verification step.' }
 ];
 const reflectionStartIndex = scenes.findIndex(item => item.type === 'bridge');
 
@@ -553,10 +685,10 @@ function Opening({ next, branch, setBranch }) {
   return (
     <section className="scene-shell opening-scene" aria-labelledby="opening-title">
       <div className="opening-copy">
-        <p className="scene-kicker">Checkout incident · Maya clicks Pay</p>
+        <p className="scene-kicker">Checkout incident · They click Pay</p>
         <h1 id="opening-title">Follow one<span>.</span><br />checkout request.</h1>
-        <p className="opening-lede">Maya wants to pay RM129. <strong>An attacker changes what happens after she clicks Pay.</strong></p>
-        <p className="opening-thesis">Select the phishing path or the browser extension path. The presentation shows what Maya, the browser, and the attacker do.</p>
+        <p className="opening-lede">They want to pay RM129. <strong>An attacker changes what happens after they click Pay.</strong></p>
+        <p className="opening-thesis">Select the phishing path or the browser extension path. The presentation shows what they do, what the browser does, and what the attacker does.</p>
         <PathSwitch branch={branch} setBranch={setBranch} />
         <button className="primary-action" type="button" onClick={next}>Start the incident <span aria-hidden="true">→</span></button>
       </div>
@@ -564,7 +696,7 @@ function Opening({ next, branch, setBranch }) {
         <div className="case-label"><span>LIVE INCIDENT · req_7F2A</span><strong>{compromisePaths[branch].short.toUpperCase()}</strong></div>
         <BrowserWindow branch={branch} />
         <div className="opening-route-preview">
-          <span><i>M</i>Maya’s browser</span><b>→</b>
+          <span><i>U</i>Their browser</span><b>→</b>
           <span className="is-destination"><i>A</i>{branch === 'phishing' ? 'Attacker collector' : 'Shop + extension collector'}</span>
         </div>
       </div>
@@ -681,7 +813,7 @@ function BrowserWindow({ branch, view = 'checkout', interactive = false, onPay, 
         <div className="demo-login">
           <span>{phishing ? 'SESSION EXPIRED' : 'WELCOME BACK'}</span>
           <h3>Sign in to continue</h3>
-          <label>Email<input tabIndex={-1} readOnly value="maya@example.com" /></label>
+          <label>Email<input tabIndex={-1} readOnly value="user@example.com" /></label>
           <label>Password<input tabIndex={-1} readOnly value="••••••••••••" /></label>
           <button type="button" tabIndex={-1}>Sign in <i>→</i></button>
           <code>{phishing ? 'POST /collect/login' : 'POST /session'}</code>
@@ -695,9 +827,9 @@ function BrowserWindow({ branch, view = 'checkout', interactive = false, onPay, 
       ) : (
         <div className="demo-checkout">
           <div className="demo-product"><i>NS</i><div><strong>Security field course</strong><span>Digital access · 1 seat</span></div><b>RM129</b></div>
-          <div className="demo-delivery"><span>Delivery account</span><strong>{inspector && !phishing ? 'drop_772' : 'maya@home'}</strong>{inspector && !phishing && <em>CHANGED LOCALLY</em>}</div>
+          <div className="demo-delivery"><span>Delivery account</span><strong>{inspector && !phishing ? 'drop_772' : 'user@home'}</strong>{inspector && !phishing && <em>CHANGED LOCALLY</em>}</div>
           <div className="demo-total"><span>Total</span><strong>RM129.00</strong></div>
-          <motion.button key={playKey} className="demo-pay" type="button" tabIndex={interactive ? 0 : -1} aria-label={interactive ? 'Replay Maya clicking Pay now' : undefined} aria-hidden={!interactive}
+          <motion.button key={playKey} className="demo-pay" type="button" tabIndex={interactive ? 0 : -1} aria-label={interactive ? 'Replay their Pay now click' : undefined} aria-hidden={!interactive}
             onClick={interactive ? onPay : undefined}
             animate={playKey ? { transform: ['scale(1)', 'scale(.96)', 'scale(1)'] } : { transform: 'scale(1)' }}
             transition={{ duration: .42, delay: .22, ease: [.23, 1, .32, 1] }}>
@@ -754,7 +886,7 @@ function RequestMap({ branch, phase = 'click', run = 1, reduceMotion = false }) 
         <marker id="arrow-extension" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--extension)" /></marker>
       </defs>
       <path className="map-grid" d="M60 170 H940 M500 36 V304" />
-      <DiagramNode x={145} y={170} tone="maya" label="MAYA’S BROWSER" detail={phishing ? 'shop-example.help' : 'shop.example + EXT'} />
+      <DiagramNode x={145} y={170} tone="user" label="USER’S BROWSER" detail={phishing ? 'shop-example.help' : 'shop.example + EXT'} />
       <DiagramNode x={855} y={86} tone="secure" label="ACTUAL SHOP" detail="shop.example/api" />
       <DiagramNode x={855} y={254} tone={phishing ? 'attack' : 'extension'} label={phishing ? (relay ? 'COLLECTOR + REPLAY' : 'ATTACKER COLLECTOR') : 'ATTACKER COLLECTOR'} detail={phishing ? 'shop-example.help' : 'collector.invalid'} />
 
@@ -828,17 +960,17 @@ function getCredentialFlow(branch, model) {
     return {
       tone: 'danger',
       scenes: [
-        { label: 'Fake prompt', actor: 'MAYA’S BROWSER · shop-example.help', title: 'A sign-in modal appears on the phishing site.', body: 'It only looks like the shop. Maya’s password is submitted to the attacker origin—not to shop.example.', visual: 'password' },
-        { label: 'Relay login', actor: 'ATTACKER SERVER → shop.example', title: 'The attacker starts a second, real login.', body: 'Using Maya’s password, the attacker’s server or automated browser sends its own request to the real shop. The shop replies to the attacker with an MFA challenge.', visual: 'relay' },
-        { label: 'Live MFA', actor: 'ATTACKER SERVER ↔ MAYA', title: 'The challenge is copied back into the fake modal.', body: 'Maya enters the current code. The attacker forwards it immediately to the real shop before it expires.', visual: 'mfa' },
+        { label: 'Fake prompt', actor: 'USER’S BROWSER · shop-example.help', title: 'A sign-in modal appears on the phishing site.', body: 'It only looks like the shop. Their password is submitted to the attacker origin—not to shop.example.', visual: 'password' },
+        { label: 'Relay login', actor: 'ATTACKER SERVER → shop.example', title: 'The attacker starts a second, real login.', body: 'Using their password, the attacker’s server or automated browser sends its own request to the real shop. The shop replies to the attacker with an MFA challenge.', visual: 'relay' },
+        { label: 'Live MFA', actor: 'ATTACKER SERVER ↔ USER', title: 'The challenge is copied back into the fake modal.', body: 'They enter the current code. The attacker forwards it immediately to the real shop before it expires.', visual: 'mfa' },
         { label: 'Session owned', actor: 'shop.example → ATTACKER HTTP CLIENT', title: bearer ? 'The real shop returns a bearer token to the attacker.' : `The real shop returns a Set-Cookie header to the attacker.`, body: bearer
-          ? 'Because the attacker made the successful login request, its client receives and stores the bearer JWT. Maya’s browser never receives this token.'
-          : `Because the attacker—not Maya’s browser—made the real login request, the response goes back to the attacker’s HTTP client. Its server-side cookie jar saves “${tokenName}=…“ for shop.example. This does not place a shop cookie on the phishing origin.`, visual: 'cookie' },
-        { label: 'Impersonation', actor: 'ATTACKER HTTP CLIENT → shop.example', title: 'The attacker can now act as Maya.', body: bearer
-          ? 'The attacker sends Authorization: Bearer … from any client. The shop sees a valid authenticated session even though Maya never approved these later actions.'
-          : `On later requests, the attacker’s HTTP client attaches its stored ${tokenName} to shop.example. The shop sees a valid authenticated session controlled entirely by the attacker. That enables account access, purchases, or data theft as Maya.`, visual: 'impact' }
+          ? 'Because the attacker made the successful login request, its client receives and stores the bearer JWT. Their browser never receives this token.'
+          : `Because the attacker—not their browser—made the real login request, the response goes back to the attacker’s HTTP client. Its server-side cookie jar saves “${tokenName}=…“ for shop.example. This does not place a shop cookie on the phishing origin.`, visual: 'cookie' },
+        { label: 'Impersonation', actor: 'ATTACKER HTTP CLIENT → shop.example', title: 'The attacker can now act as them.', body: bearer
+          ? 'The attacker sends Authorization: Bearer … from any client. The shop sees a valid authenticated session even though they never approved these later actions.'
+          : `On later requests, the attacker’s HTTP client attaches its stored ${tokenName} to shop.example. The shop sees a valid authenticated session controlled entirely by the attacker. That enables account access, purchases, or data theft as them.`, visual: 'impact' }
       ],
-      facts: [['!', 'Password + MFA relayed', 'danger'], ['→', 'Attacker owns new session', 'danger'], ['✓', 'Maya cookie not copied', 'safe']]
+      facts: [['!', 'Password + MFA relayed', 'danger'], ['→', 'Attacker owns new session', 'danger'], ['✓', 'Their cookie not copied', 'safe']]
     };
   }
 
@@ -846,10 +978,10 @@ function getCredentialFlow(branch, model) {
     return {
       tone: 'danger',
       scenes: [
-        { label: 'Real prompt', actor: 'MAYA · shop.example', title: 'Maya signs in to the real shop.', body: 'The shop verifies her password and MFA normally.', visual: 'password' },
-        { label: 'Token stored', actor: 'SHOP RESPONSE → MAYA’S BROWSER', title: 'The app stores its bearer JWT in localStorage.', body: 'The token is reusable proof of Maya’s session and is readable by code with access to the page.', visual: 'cookie' },
+        { label: 'Real prompt', actor: 'USER · shop.example', title: 'They sign in to the real shop.', body: 'The shop verifies their password and MFA normally.', visual: 'password' },
+        { label: 'Token stored', actor: 'SHOP RESPONSE → USER’S BROWSER', title: 'The app stores its bearer JWT in localStorage.', body: 'The token is reusable proof of their session and is readable by code with access to the page.', visual: 'cookie' },
         { label: 'Token copied', actor: 'HOSTILE EXTENSION → COLLECTOR', title: 'The extension reads and exfiltrates the token.', body: 'Unlike an HttpOnly cookie, the token value can be copied out of the browser.', visual: 'relay' },
-        { label: 'Off-device replay', actor: 'ATTACKER CLIENT → shop.example', title: 'The attacker replays it anywhere.', body: 'Authorization: Bearer … gives the attacker Maya’s authenticated authority until the token expires or is revoked.', visual: 'impact' }
+        { label: 'Off-device replay', actor: 'ATTACKER CLIENT → shop.example', title: 'The attacker replays it anywhere.', body: 'Authorization: Bearer … gives the attacker their authenticated authority until the token expires or is revoked.', visual: 'impact' }
       ],
       facts: [['!', 'Token value exposed', 'danger'], ['→', 'Off-device replay', 'danger'], ['—', 'Not ambient CSRF', 'safe']]
     };
@@ -858,10 +990,10 @@ function getCredentialFlow(branch, model) {
   return {
     tone: 'warning',
     scenes: [
-      { label: 'Real prompt', actor: 'MAYA · shop.example', title: 'Maya signs in to the real shop.', body: 'The shop verifies her password and MFA normally.', visual: 'password' },
-      { label: 'Cookie stored', actor: 'SHOP RESPONSE → MAYA’S BROWSER', title: `The browser stores the ${tokenName}.`, body: 'HttpOnly prevents page and extension content scripts from reading the credential value.', visual: 'cookie' },
+      { label: 'Real prompt', actor: 'USER · shop.example', title: 'They sign in to the real shop.', body: 'The shop verifies their password and MFA normally.', visual: 'password' },
+      { label: 'Cookie stored', actor: 'SHOP RESPONSE → USER’S BROWSER', title: `The browser stores the ${tokenName}.`, body: 'HttpOnly prevents page and extension content scripts from reading the credential value.', visual: 'cookie' },
       { label: 'Read blocked', actor: 'HOSTILE EXTENSION · PAGE CONTEXT', title: 'The extension cannot copy the token.', body: 'Cookie secrecy still holds. But the authenticated page remains available to hostile local code.', visual: 'blocked' },
-      { label: 'Session ridden', actor: 'MAYA’S BROWSER → shop.example', title: 'The extension triggers or changes a shop request.', body: `The browser automatically attaches the ${tokenName}. The attacker gains an authenticated action without ever learning the token string.`, visual: 'impact' }
+      { label: 'Session ridden', actor: 'USER’S BROWSER → shop.example', title: 'The extension triggers or changes a shop request.', body: `The browser automatically attaches the ${tokenName}. The attacker gains an authenticated action without ever learning the token string.`, visual: 'impact' }
     ],
     facts: [['✓', 'Token unreadable', 'safe'], ['!', 'Session rideable', 'warning'], ['→', 'Shop receives authority', 'warning']]
   };
@@ -888,11 +1020,11 @@ function CredentialFlow({ branch, model, reduceMotion }) {
             <div className="auth-site-bar"><i /><i /><i /><code>{branch === 'phishing' && step === 0 ? 'shop-example.help' : scene.actor}</code></div>
             {(scene.visual === 'password' || scene.visual === 'mfa') ? <div className="auth-popup">
               <span>{scene.visual === 'mfa' ? 'SECURITY CHECK' : 'SESSION EXPIRED'}</span><strong>{scene.visual === 'mfa' ? 'Enter the code we sent' : 'Sign in to continue'}</strong>
-              <div className="auth-popup-fields">{scene.visual === 'mfa' ? <code>4 8 1 2 0 6</code> : <><i>maya@example.com</i><i>••••••••••••</i></>}</div><b>{scene.visual === 'mfa' ? 'VERIFY' : 'CONTINUE'} →</b>
+              <div className="auth-popup-fields">{scene.visual === 'mfa' ? <code>4 8 1 2 0 6</code> : <><i>user@example.com</i><i>••••••••••••</i></>}</div><b>{scene.visual === 'mfa' ? 'VERIFY' : 'CONTINUE'} →</b>
             </div> : <div className="auth-transfer">
               <span>{scene.visual === 'cookie' ? 'RESPONSE RECEIVED' : scene.visual === 'blocked' ? 'READ ATTEMPT' : scene.visual === 'impact' ? 'AUTHENTICATED REQUEST' : 'SERVER RELAY'}</span>
               <code>{scene.visual === 'cookie' ? (model === 'bearer' ? 'Authorization token → attacker client' : 'Set-Cookie: __Host-session=eyJ…') : scene.visual === 'blocked' ? 'document.cookie  ✕  HttpOnly' : scene.visual === 'impact' ? 'Cookie: __Host-session=eyJ…  ✓' : 'POST shop.example/login'}</code>
-              <strong>{scene.visual === 'blocked' ? 'VALUE HIDDEN' : scene.visual === 'impact' ? 'ACTING AS MAYA' : 'ATTACKER-CONTROLLED CLIENT'}</strong>
+              <strong>{scene.visual === 'blocked' ? 'VALUE HIDDEN' : scene.visual === 'impact' ? 'ACTING AS USER' : 'ATTACKER-CONTROLLED CLIENT'}</strong>
             </div>}
           </div>
           <div className="credential-story-copy"><span>{scene.actor}</span><strong className="story-title">{scene.title}</strong><p>{scene.body}</p></div>
@@ -952,7 +1084,7 @@ function SignInVisual({ branch, reduceMotion }) {
     <div className="visual-stage signin-visual">
       <button id="credential-flow-launcher" className="signin-flow-launcher" type="button" onClick={() => setOpen(true)}>
         <span>ANIMATED USER FLOW · {credentialModels[model].shortLabel}</span>
-        <strong>{branch === 'phishing' ? 'Watch the attacker relay sign-in, receive a new session, then impersonate Maya.' : 'Watch where local code can intercept—or ride—the stored session.'}</strong>
+        <strong>{branch === 'phishing' ? 'Watch the attacker relay sign-in, receive a new session, then impersonate them.' : 'Watch where local code can intercept—or ride—the stored session.'}</strong>
         <i>Open full-screen flow ↗</i>
       </button>
       <AnimatePresence>{open && <FullscreenCredentialFlow branch={branch} model={model} setModel={setModel} reduceMotion={reduceMotion} close={() => setOpen(false)} />}</AnimatePresence>
@@ -964,7 +1096,7 @@ function ArrivalVisual({ branch, reduceMotion }) {
   const phishing = branch === 'phishing';
   return (
     <div className="visual-stage arrival-visual">
-      <motion.div className="maya-thought" initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(8px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }} transition={{ duration: .35, ease: [.23, 1, .32, 1] }}><span>MAYA SEES</span><strong>“The checkout I expected.”</strong></motion.div>
+      <motion.div className="user-thought" initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(8px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }} transition={{ duration: .35, ease: [.23, 1, .32, 1] }}><span>THEY SEE</span><strong>“The checkout I expected.”</strong></motion.div>
       <JourneyBrowser branch={branch} reduceMotion={reduceMotion} />
       <motion.div className={`origin-loupe ${phishing ? 'is-danger' : 'is-safe'}`} initial={reduceMotion ? false : { opacity: 0, transform: 'scale(.94)' }} animate={{ opacity: 1, transform: 'scale(1)' }} transition={{ duration: .4, delay: .24, ease: [.23, 1, .32, 1] }}>
         <span>BROWSER KNOWS</span><code>{phishing ? 'https://shop-example.help' : 'https://shop.example'}</code><strong>{phishing ? 'Valid TLS. Wrong identity.' : 'Right origin. Extension active.'}</strong>
@@ -980,7 +1112,7 @@ function MutationVisual({ branch, reduceMotion }) {
       <BrowserWindow branch={branch} inspector />
       <div className="wiring-panel">
         <span>{phishing ? 'BUTTON WIRING' : 'LOCAL MUTATION'}</span>
-        {phishing ? <div className="handler-chain"><motion.b initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .08 }}>Pay click</motion.b><i>→</i><motion.b initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .2 }}>preventDefault()</motion.b><i>→</i><motion.b className="is-danger" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .32 }}>POST /collect</motion.b></div> : <div className="dom-diff"><code><del>delivery.account = "maya@home"</del><ins>delivery.account = "drop_772"</ins></code><motion.i initial={reduceMotion ? false : { transform: 'scaleX(0)' }} animate={{ transform: 'scaleX(1)' }} transition={{ duration: .45, delay: .22, ease: [.23, 1, .32, 1] }} /></div>}
+        {phishing ? <div className="handler-chain"><motion.b initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .08 }}>Pay click</motion.b><i>→</i><motion.b initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .2 }}>preventDefault()</motion.b><i>→</i><motion.b className="is-danger" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .32 }}>POST /collect</motion.b></div> : <div className="dom-diff"><code><del>delivery.account = "user@home"</del><ins>delivery.account = "drop_772"</ins></code><motion.i initial={reduceMotion ? false : { transform: 'scaleX(0)' }} animate={{ transform: 'scaleX(1)' }} transition={{ duration: .45, delay: .22, ease: [.23, 1, .32, 1] }} /></div>}
         <p>{phishing ? 'The familiar label hides an attacker-owned submit target.' : 'The extension never reads the HttpOnly cookie. It changes a value the page will serialize.'}</p>
       </div>
     </div>
@@ -995,7 +1127,7 @@ function ClickVisual({ branch, reduceMotion }) {
         <BrowserWindow branch={branch} interactive onPay={() => setRun(value => value + 1)} playKey={run} />
         {!reduceMotion && <motion.div key={`cursor-${run}`} className="visual-cursor" initial={{ opacity: 0, transform: 'translate(90px, 54px)' }} animate={{ opacity: [0, 1, 1, 0], transform: ['translate(90px, 54px)', 'translate(0px, 0px)', 'translate(0px, 0px)', 'translate(0px, 0px)'] }} transition={{ duration: 1.05, ease: 'easeInOut' }}>↖</motion.div>}
       </div>
-      <div className="click-route"><RequestMap branch={branch} run={run} reduceMotion={reduceMotion} /><button type="button" onClick={() => setRun(value => value + 1)}>Replay Maya’s click ↻</button></div>
+      <div className="click-route"><RequestMap branch={branch} run={run} reduceMotion={reduceMotion} /><button type="button" onClick={() => setRun(value => value + 1)}>Replay their click ↻</button></div>
     </div>
   );
 }
@@ -1003,8 +1135,8 @@ function ClickVisual({ branch, reduceMotion }) {
 function RequestJourneyVisual({ branch, reduceMotion }) {
   const requestOptions = branch === 'phishing'
     ? {
-        collector: { label: '1 · Collector', method: 'POST shop-example.help/collect', origin: 'Origin: https://shop-example.help', credential: 'Cookie[shop.example]: not attached', intent: 'Maya voluntarily submitted fields', authority: 'Attacker stores password, OTP, checkout data', outcome: 'CAPTURED · browser controls intact' },
-        replay: { label: '2 · Replay', method: 'POST shop.example/session', origin: 'Server-to-server · no browser Origin', credential: 'email + password + live OTP', intent: 'Stolen proof; not Maya’s current intent', authority: 'Shop may mint session=s_attacker', outcome: 'NEW SESSION · not Maya’s cookie' }
+        collector: { label: '1 · Collector', method: 'POST shop-example.help/collect', origin: 'Origin: https://shop-example.help', credential: 'Cookie[shop.example]: not attached', intent: 'They voluntarily submitted fields', authority: 'Attacker stores password, OTP, checkout data', outcome: 'CAPTURED · browser controls intact' },
+        replay: { label: '2 · Replay', method: 'POST shop.example/session', origin: 'Server-to-server · no browser Origin', credential: 'email + password + live OTP', intent: 'Stolen proof; not their current intent', authority: 'Shop may mint session=s_attacker', outcome: 'NEW SESSION · not their cookie' }
       }
     : {
         shop: { label: 'A · Shop request', method: 'POST shop.example/api/checkout', origin: 'Origin: https://shop.example', credential: 'Cookie: __Host-session=s_7f2a', intent: 'X-CSRF-Token: valid', authority: 'deliveryAccountId=drop_772 ← client', outcome: 'AUTH ✓ · CSRF ✓ · OWNERSHIP ✕' },
@@ -1031,16 +1163,16 @@ function RequestJourneyVisual({ branch, reduceMotion }) {
 const capabilityModes = {
   phishing: {
     label: 'Phishing', hint: 'wrong site', icon: '◇', context: 'On an attacker-owned website',
-    power: 'Maya can hand over secrets and form data.',
+    power: 'They can hand over secrets and form data.',
     crossed: 'Human destination checking',
     standing: 'The browser still isolates the real shop session.',
     request: 'POST shop-example.help/collect/login',
-    detail: 'The collector receives only what Maya submits. A separate replay may create a new attacker session; Maya’s original HttpOnly cookie is not stolen.'
+    detail: 'The collector receives only what they submit. A separate replay may create a new attacker session; their original HttpOnly cookie is not stolen.'
   },
   csrf: {
     label: 'CSRF', hint: 'borrowed session', icon: '↪', context: 'On another site, sending toward the shop',
-    power: 'The browser may attach Maya’s session for one action.',
-    crossed: 'Proof that Maya intended this request',
+    power: 'The browser may attach their session for one action.',
+    crossed: 'Proof that they intended this request',
     standing: 'The attacker still cannot read the shop page or response.',
     request: 'POST shop.example/api/checkout',
     detail: 'SameSite can block the cross-site POST. Origin, CSRF-token, and Fetch Metadata checks let the server verify intent; SOP/CORS alone do not prevent every request.'
@@ -1100,7 +1232,7 @@ function ReceiptsVisual({ branch, reduceMotion }) {
   const phishing = branch === 'phishing';
   return (
     <div className="visual-stage receipts-visual">
-      <div className="receipt-column"><span>MAYA’S SCREEN</span><BrowserWindow branch={branch} view="receipt" /></div>
+      <div className="receipt-column"><span>USER’S SCREEN</span><BrowserWindow branch={branch} view="receipt" /></div>
       <motion.div className="receipt-divider" initial={reduceMotion ? false : { transform: 'scaleY(0)' }} animate={{ transform: 'scaleY(1)' }} transition={{ duration: .5, ease: [.23, 1, .32, 1] }}><span>SAME MOMENT</span></motion.div>
       <div className="receipt-column attacker-receipt"><span>ATTACKER’S SCREEN</span><motion.div className="attacker-dashboard" initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(10px)' }} animate={{ opacity: 1, transform: 'translateY(0px)' }} transition={{ duration: .4, delay: .18, ease: [.23, 1, .32, 1] }}><div><i>●</i><span>LIVE EVENTS</span><strong>09:41:00.214</strong></div><b>{phishing ? 'capture_7F2A' : 'order ord_8821'}</b><h3>{phishing ? 'Credentials captured' : 'Delivery redirected'}</h3><p>{phishing ? 'Form data stored · victim shown local success' : 'delivery.account → drop_772'}</p><code>{phishing ? 'collector / 200 OK' : 'shop response / 200 OK'}</code></motion.div></div>
     </div>
@@ -1127,7 +1259,6 @@ const journeyVisuals = {
   'The invisible edit': MutationVisual,
   'The click': ClickVisual,
   'Under the hood': RequestJourneyVisual,
-  'The privilege gap': PrivilegeGapVisual,
   'The two receipts': ReceiptsVisual,
   'The rewind': RewindVisual
 };
@@ -1154,9 +1285,159 @@ function JourneyScene({ scene, branch, setBranch }) {
         <motion.div className="scene-visual-wrap" key={`${branch}-${scene.label}`}
           initial={reduceMotion ? false : { opacity: 0, transform: 'translateX(12px)' }} animate={{ opacity: 1, transform: 'translateX(0px)' }} exit={reduceMotion ? { opacity: 0 } : { opacity: 0, transform: 'translateX(-8px)' }} transition={{ duration: .32, ease: [.23, 1, .32, 1] }}>
           <SceneVisual branch={branch} story={story} reduceMotion={reduceMotion} />
-          {!['The sign-in', 'The privilege gap'].includes(scene.label) && <VisualEvidence items={story.evidence} reduceMotion={reduceMotion} />}
+          {scene.label !== 'The sign-in' && <VisualEvidence items={story.evidence} reduceMotion={reduceMotion} />}
         </motion.div>
       </AnimatePresence>
+    </section>
+  );
+}
+
+function BrowserAttackLab() {
+  const reduceMotion = useReducedMotion();
+  const [mode, setMode] = useState('csrf');
+  const [run, setRun] = useState(0);
+  const csrf = mode === 'csrf';
+  const steps = csrf
+    ? [['evil.example', 'HTML form submits cross-site'], ['browser', 'Cookie may attach automatically'], ['shop.example', 'Request arrives; response stays opaque']]
+    : [['stored comment', '<img onerror=attack()>'], ['shop.example DOM', 'Unsafe HTML sink creates code'], ['same-origin script', 'Reads DOM, token, and response']];
+  return <div className={`browser-attack-lab mode-${mode}`}>
+    <div className="lab-mode-tabs" role="group" aria-label="Choose browser attack demonstration">{['csrf', 'xss'].map(value => <button type="button" key={value} className={mode === value ? 'is-selected' : ''} onClick={() => { setMode(value); setRun(count => count + 1); }}>{value.toUpperCase()}<small>{value === 'csrf' ? 'cross-site send' : 'same-origin execution'}</small></button>)}</div>
+    <div className="attack-demo" key={`${mode}-${run}`}>
+      <div className="attack-code"><span>ATTACK INPUT</span><code>{csrf ? '<form action="https://shop.example/api/pay" method="POST">' : 'results.innerHTML = userComment'}</code><code>{csrf ? '<input name="amount" value="129">' : 'userComment = `<img src=x onerror=attack()>`'}</code></div>
+      <div className="attack-route">{steps.map(([title, body], index) => <motion.div key={title} initial={reduceMotion ? false : { opacity: 0, transform: 'translateX(-12px)' }} animate={{ opacity: 1, transform: 'translateX(0)' }} transition={{ duration: .28, delay: reduceMotion ? 0 : index * .22, ease: [.23, 1, .32, 1] }}><span>0{index + 1}</span><strong>{title}</strong><small>{body}</small>{index < 2 && <i>→</i>}</motion.div>)}</div>
+      <div className="attack-verdict"><div><span>ATTACKER CAN</span><strong>{csrf ? 'Cause a state-changing request' : 'Act and read as shop.example'}</strong></div><div><span>PRIMARY CONTROLS</span><strong>{csrf ? 'SameSite + Origin + Fetch Metadata + CSRF token' : 'Contextual encoding + safe sinks; CSP/Trusted Types layer'}</strong></div></div>
+      <button type="button" className="diagram-replay" onClick={() => setRun(count => count + 1)}>Replay mechanism ↻</button>
+    </div>
+  </div>;
+}
+
+function TLSChainVisual() {
+  const reduceMotion = useReducedMotion();
+  const chain = [
+    ['LEAF', 'shop.example', 'SAN contains shop.example · valid now · signed by intermediate'],
+    ['INTERMEDIATE', 'Example Issuing CA 02', 'CA=true · keyCertSign · signed by root'],
+    ['TRUST ANCHOR', 'Example Root CA', 'Public key preinstalled in OS/browser trust store']
+  ];
+  return <div className="tls-chain-visual"><div className="certificate-chain">{chain.map(([type, name, detail], index) => <motion.div key={type} initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(8px)' }} animate={{ opacity: 1, transform: 'translateY(0)' }} transition={{ duration: .3, delay: reduceMotion ? 0 : index * .16 }}><span>{type}</span><strong>{name}</strong><code>{detail}</code>{index < 2 && <i>signature verifies ↓</i>}</motion.div>)}</div><div className="tls-checks"><span>CLIENT VALIDATES</span>{['Hostname / SAN match', 'Signature path to trusted root', 'Validity period + constraints', 'Revocation policy where applicable'].map(item => <strong key={item}>✓ {item}</strong>)}<code>ECDHE → shared traffic keys<br />AEAD → confidentiality + integrity</code></div></div>;
+}
+
+function HeadersVisual() {
+  const [selected, setSelected] = useState('csp');
+  const headers = {
+    csp: ['Content-Security-Policy', "default-src 'self'; script-src 'nonce-r4nd0m'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'", 'Constrain script, plugin, base URL, and framing capabilities. Prefer nonces/hashes; avoid unsafe-inline.'],
+    hsts: ['Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload', 'Tell clients to use HTTPS for future requests. Only trusted when received over HTTPS.'],
+    nosniff: ['X-Content-Type-Options', 'nosniff', 'Require declared MIME types for script and style destinations.'],
+    referrer: ['Referrer-Policy', 'strict-origin-when-cross-origin', 'Limit URL detail sent in the Referer header across origins.'],
+    permissions: ['Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)', 'Delegate or disable powerful browser features for this document and frames.'],
+    isolation: ['COOP + COEP', 'same-origin · require-corp', 'Isolate the browsing context group; required for cross-origin isolation and SharedArrayBuffer.']
+  };
+  const item = headers[selected];
+  return <div className="headers-visual"><div className="header-list">{Object.entries(headers).map(([key, [name]]) => <button type="button" key={key} className={selected === key ? 'is-selected' : ''} onClick={() => setSelected(key)}><span>{name}</span><small>{selected === key ? 'INSPECTING' : 'RESPONSE HEADER'}</small></button>)}</div><div className="header-inspector" aria-live="polite"><span>HTTP/2 200</span><code><b>{item[0]}:</b> {item[1]}</code><strong>{item[2]}</strong><div><i>NOT A SUBSTITUTE FOR</i><p>Server authorization · safe query APIs · output encoding · business-rule enforcement</p></div></div></div>;
+}
+
+function SupplyChainVisual() {
+  const reduceMotion = useReducedMotion();
+  const stages = [['SOURCE', 'review + protected branch'], ['RESOLVE', 'lockfile + registry policy'], ['BUILD', 'isolated ephemeral runner'], ['ATTEST', 'SBOM + provenance + signature'], ['DEPLOY', 'verify digest + signature'], ['RUN', 'least privilege + inventory']];
+  return <div className="supply-visual"><div className="supply-pipeline">{stages.map(([title, control], index) => <motion.div key={title} initial={reduceMotion ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: .25, delay: reduceMotion ? 0 : index * .12 }}><span>0{index + 1}</span><strong>{title}</strong><small>{control}</small>{index < stages.length - 1 && <i>→</i>}</motion.div>)}</div><div className="supply-evidence"><div><span>ARTIFACT IDENTITY</span><code>sha256:9b71…e2c4</code></div><div><span>PROVENANCE</span><code>repo@a813c2 · workflow/build.yml</code></div><div><span>DEPLOY POLICY</span><code>signature ✓ · builder allowed ✓</code></div></div><p><strong>Lockfiles answer “which version?”</strong> Signatures and provenance help answer “who built this artifact from what?” An SBOM answers “what is inside?” Runtime isolation limits what compromised code can reach.</p></div>;
+}
+
+function PkiFoundationVisual({ kind }) {
+  const reduceMotion = useReducedMotion();
+  const enter = index => ({
+    initial: reduceMotion ? false : { opacity: 0, transform: 'translateY(14px)' },
+    animate: { opacity: 1, transform: 'translateY(0)' },
+    transition: { duration: .38, delay: reduceMotion ? 0 : index * .11, ease: [.23, 1, .32, 1] }
+  });
+
+  if (kind === 'goal') return (
+    <div className="pki-visual pki-goal-visual" role="img" aria-label="A name being cryptographically bound to a public key">
+      <motion.div className="pki-goal-side" {...enter(0)}><span>NAME</span><strong>api.shop.example</strong><small>the identifier we understand</small></motion.div>
+      <div className="pki-binding"><motion.i initial={reduceMotion ? false : { transform: 'scaleX(0)' }} animate={{ transform: 'scaleX(1)' }} transition={{ duration: .8, ease: [.77, 0, .175, 1] }} /><b>signed binding</b><em>↔</em></div>
+      <motion.div className="pki-goal-side" {...enter(2)}><span>PUBLIC KEY</span><strong>EC P-256 · 03:A7…</strong><small>the cryptographic identity we can verify</small></motion.div>
+    </div>
+  );
+
+  if (kind === 'identity') {
+    const steps = [['ENTITY', 'A thing that exists', 'service / person / device'], ['NAME', 'A unique reference', 'api.shop.example'], ['CLAIM', '“That name is mine”', 'presented across a network'], ['AUTHENTICATE', 'Check the claim', 'true—or not']];
+    return <div className="pki-visual pki-identity-visual" role="img" aria-label="The journey from an entity to an authenticated name claim">{steps.map(([label, title, detail], index) => <motion.div className="pki-step" key={label} {...enter(index)}><span>0{index + 1} · {label}</span><strong>{title}</strong><small>{detail}</small>{index < steps.length - 1 && <i>→</i>}</motion.div>)}</div>;
+  }
+
+  if (kind === 'signatures') return (
+    <div className="pki-visual pki-compare" role="img" aria-label="Comparison of a shared-secret MAC and an asymmetric digital signature">
+      <motion.div className="pki-compare-lane" {...enter(0)}><span>MAC · SHARED SECRET</span><div><b>sender</b><code>secret + message</code><i>→ HMAC →</i><strong>recipient<br /><small>same secret</small></strong></div><p>Both sides can create the same proof. Useful—but authorship is shared.</p></motion.div>
+      <motion.div className="pki-compare-lane is-signature" {...enter(1)}><span>SIGNATURE · KEY PAIR</span><div><b>private key</b><code>sign(message)</code><i>→ signature →</i><strong>public key<br /><small>verify only</small></strong></div><p>One side signs. Everyone else can verify without gaining the power to forge.</p></motion.div>
+    </div>
+  );
+
+  if (kind === 'vision') {
+    const steps = [['RELYING PARTY', 'Generate fresh random challenge', '7F 2A 91 D4…'], ['PRIVATE KEY HOLDER', 'Sign the challenge', 'private key never leaves'], ['PUBLIC KEY', 'Verify the signature', 'identity seen across network']];
+    return <div className="pki-visual pki-vision-visual" role="img" aria-label="A challenge response proves possession of a private key">{steps.map(([label, title, detail], index) => <motion.div className="pki-step" key={label} {...enter(index)}><span>{label}</span><strong>{title}</strong><code>{detail}</code>{index < steps.length - 1 && <i>→</i>}</motion.div>)}<motion.div className="pki-packet" initial={reduceMotion ? false : { transform: 'translateX(-160px)', opacity: 0 }} animate={reduceMotion ? { transform: 'translateX(0)', opacity: 1 } : { transform: 'translateX(160px)', opacity: [0, 1, 1, 0] }} transition={reduceMotion ? { duration: 0 } : { duration: 2.4, repeat: Infinity, ease: 'linear' }}>0101</motion.div></div>;
+  }
+
+  if (kind === 'certificate') return (
+    <div className="pki-visual pki-certificate-visual" role="img" aria-label="A certificate authority signs Bob's name and public key">
+      <motion.div className="pki-ca" {...enter(0)}><span>ISSUER · CA</span><strong>Some Issuer</strong><small>trusted public key already known</small><i>signs →</i></motion.div>
+      <motion.div className="pki-cert-card" {...enter(1)}><div><span>X.509 CERTIFICATE</span><b>VALID · 24 HOURS</b></div><h3>Bob</h3><p><small>SUBJECT ALTERNATIVE NAME</small>bob.internal.example</p><p><small>PUBLIC KEY</small>EC P-256 · 01:23:42…</p><footer><i>✦</i><strong>Signed by Some Issuer</strong></footer></motion.div>
+      <motion.div className="pki-rp" {...enter(2)}><span>RELYING PARTY</span><strong>Verify issuer’s signature</strong><small>then trust the binding</small></motion.div>
+    </div>
+  );
+
+  if (kind === 'formats') {
+    const layers = [['X.509', 'the certificate data structure'], ['ASN.1', 'the language that defines it'], ['DER', 'canonical binary encoding'], ['PEM', 'Base64 + BEGIN / END labels']];
+    return <div className="pki-visual pki-formats-visual" role="img" aria-label="Certificate representation layers from X.509 to PEM"><div className="pki-format-stack">{layers.map(([label, detail], index) => <motion.div key={label} {...enter(index)}><span>{label}</span><strong>{detail}</strong></motion.div>)}</div><motion.div className="pki-pem" {...enter(4)}><span>WHAT YOU USUALLY SEE</span><code>-----BEGIN CERTIFICATE-----<br />MIIBwzCCAWqgAwIBAgIRAIi5…<br />…SUP20gB1kwCgYIKoZIzj0E<br />-----END CERTIFICATE-----</code><small>PKCS#7: chain · PKCS#12: chain + private key</small></motion.div></div>;
+  }
+
+  if (kind === 'trust') {
+    const chain = [['ROOT', 'Trust anchor', 'preinstalled locally'], ['INTERMEDIATE', 'Issuing CA', 'signed by root'], ['LEAF', 'api.shop.example', 'signed by intermediate'], ['RELYING PARTY', 'Browser / client', 'validates the path']];
+    return <div className="pki-visual pki-trust-visual" role="img" aria-label="Certificate chain from a trusted root through an intermediate and leaf to a relying party">{chain.map(([label, title, detail], index) => <motion.div className={`pki-chain-node node-${index}`} key={label} {...enter(index)}><span>{label}</span><strong>{title}</strong><small>{detail}</small>{index < chain.length - 1 && <i>{index < 2 ? 'signs →' : 'presents →'}</i>}</motion.div>)}<div className="pki-validation"><span>PATH VALIDATION</span><b>hostname ✓</b><b>signatures ✓</b><b>time ✓</b><b>constraints ✓</b></div></div>;
+  }
+
+  const steps = [['GENERATE', 'key pair stays here'], ['REQUEST', 'signed CSR'], ['PROVE', 'control of name'], ['ISSUE', 'CA signs'], ['USE', 'TLS / mTLS'], ['RENEW', 'replace before expiry']];
+  return <div className="pki-visual pki-lifecycle-visual" role="img" aria-label="Certificate lifecycle from local key generation through automated renewal"><div className="pki-cycle">{steps.map(([label, detail], index) => <motion.div className="pki-cycle-step" key={label} {...enter(index)}><span>0{index + 1}</span><strong>{label}</strong><small>{detail}</small>{index < steps.length - 1 && <i>→</i>}</motion.div>)}</div><div className="pki-lifetime"><span>NOT BEFORE</span><i><b /></i><span>NOT AFTER</span><strong>short lifetime · automatic rotation · synchronized clocks</strong></div></div>;
+}
+
+function FoundationScene({ scene }) {
+  return (
+    <section className={`scene-shell foundation-scene foundation-scene-${scene.zone}`} aria-labelledby={`foundation-${scene.zone}`}>
+      <div className="foundation-heading">
+        <div className="scene-index"><span>{scene.eyebrow}</span><strong>{scene.time}</strong></div>
+        <h2 id={`foundation-${scene.zone}`}>{scene.title}</h2>
+        <p className="scene-thesis">{scene.thesis}</p>
+      </div>
+      <PkiFoundationVisual kind={scene.visual} />
+      <div className="foundation-footer"><span>{scene.footer[0]}</span><strong>{scene.footer[1]}</strong><a href="https://smallstep.com/blog/everything-pki/" target="_blank" rel="noreferrer">Adapted from Smallstep ↗</a></div>
+    </section>
+  );
+}
+
+function PkiToAppBridge({ next }) {
+  const reduceMotion = useReducedMotion();
+  const checks = [
+    ['CERTIFICATE', 'A trusted issuer bound a public key to the server name.', 'api.shop.example ↔ EC public key'],
+    ['TLS CHANNEL', 'The browser protected confidentiality and integrity in transit.', 'network observer blocked'],
+    ['APPLICATION', 'Intent, authorization, input, and business rules are still unproven.', 'the request remains untrusted']
+  ];
+  return (
+    <section className="scene-shell pki-app-bridge" aria-labelledby="pki-app-bridge-title">
+      <div className="pki-app-bridge-copy">
+        <div className="scene-index"><span>Certificates → application security</span><strong>connection established</strong></div>
+        <p className="scene-kicker">The handshake is done</p>
+        <h2 id="pki-app-bridge-title">The certificate got us to a named server. Now what?</h2>
+        <p className="scene-thesis">A protected connection can still reach the wrong origin, carry a harmful request, or run beside hostile local code. TLS authenticates the endpoint—not the person’s intent or the application’s decisions.</p>
+        <button className="primary-action" type="button" onClick={next}>Follow the request <span aria-hidden="true">→</span></button>
+      </div>
+      <div className="pki-app-handoff" role="img" aria-label="A certificate establishes server identity and TLS protects the channel before application checks begin">
+        <div className="handoff-route" aria-hidden="true"><span>BROWSER</span><i /><b>TLS</b><i /><span>SERVER</span></div>
+        {checks.map(([label, title, detail], index) => (
+          <motion.article key={label}
+            initial={reduceMotion ? false : { opacity: 0, transform: 'translateY(14px)' }}
+            animate={{ opacity: 1, transform: 'translateY(0)' }}
+            transition={{ duration: .38, delay: reduceMotion ? 0 : index * .13, ease: [.23, 1, .32, 1] }}>
+            <span>0{index + 1} · {label}</span><strong>{title}</strong><code>{detail}</code>
+          </motion.article>
+        ))}
+        <div className="handoff-verdict"><span>THE HANDOFF</span><strong>The certificate answered who is on the other end. The application must decide what happens next.</strong></div>
+      </div>
     </section>
   );
 }
@@ -1169,11 +1450,11 @@ function ReflectionBridge({ branch, next }) {
         <div className="scene-index"><span>Journey complete</span><strong>{path.label}</strong></div>
         <p className="scene-kicker">Review the request</p>
         <h2 id="reflection-title">Check each system boundary.</h2>
-        <p className="scene-thesis">You saw how one request caused harm. Now follow the request through eight boundaries. At each boundary, identify the claim, the attack, and the control.</p>
+        <p className="scene-thesis">You saw how one request caused harm. Now apply five reusable lessons across browser, edge, application, data, and operational boundaries. At each one, identify the claim, the attack, and the control.</p>
         <button className="primary-action" type="button" onClick={next}>Start the review <span aria-hidden="true">→</span></button>
       </div>
       <div className="bridge-map" role="img" aria-label="Moving from the concrete incident to reusable security questions">
-        <div><span>INCIDENT</span><strong>{branch === 'phishing' ? 'Maya used a checkout page on the wrong origin.' : 'A hostile browser extension changed data on the correct site.'}</strong></div>
+        <div><span>INCIDENT</span><strong>{branch === 'phishing' ? 'They used a checkout page on the wrong origin.' : 'A hostile browser extension changed data on the correct site.'}</strong></div>
         <i>→</i>
         <div><span>CHECK</span><strong>Which claim crosses the boundary? Which component verifies it?</strong></div>
         <i>→</i>
@@ -1199,6 +1480,30 @@ function Checkpoint({ scene, phase, setPhase }) {
   );
 }
 
+function LifecycleScene() {
+  const stages = [
+    ['01', 'DESIGN', 'Model assets, threats, boundaries, abuse cases, and safe failure states.'],
+    ['02', 'BUILD', 'Use secure defaults, managed secrets, reviewed dependencies, and least privilege.'],
+    ['03', 'VERIFY', 'Test access rules, misuse cases, code, dependencies, and configurations.'],
+    ['04', 'DEPLOY', 'Harden transport and runtime policy; patch and inventory what ships.'],
+    ['05', 'MONITOR', 'Collect redacted evidence and alert on owned, actionable signals.'],
+    ['06', 'RESPOND', 'Contain, revoke, communicate, recover, and test restoration.']
+  ];
+  return <section className="scene-shell lifecycle-scene" aria-labelledby="lifecycle-title">
+    <div className="foundation-heading"><div className="scene-index"><span>Secure development lifecycle</span><strong>continuous</strong></div><h2 id="lifecycle-title">Security continues after the request.</h2><p className="scene-thesis">Layer controls so the system can prevent vulnerabilities, constrain exploitation, limit blast radius, detect abuse, and recover.</p></div>
+    <div className="lifecycle-track">{stages.map(([number, title, body]) => <article key={number}><span>{number}</span><strong>{title}</strong><p>{body}</p></article>)}</div>
+    <div className="foundation-footer"><span>OWNERSHIP</span><strong>Every control needs an owner, evidence, and a review cadence.</strong></div>
+  </section>;
+}
+
+function AppendixPlaceholder() {
+  const topics = ['Cookie and JWT storage', 'XSS output contexts and sanitization', 'Password storage and passkeys', 'CORS and cross-origin isolation', 'File upload security', 'SSRF and outbound request policy', 'Secrets and key management', 'API abuse and rate limiting', 'Cloud identity and metadata services', 'Incident response checklist'];
+  return <section className="scene-shell appendix-scene" aria-labelledby="appendix-title">
+    <div className="foundation-heading"><div className="scene-index"><span>Optional modules · deferred</span><strong>placeholder</strong></div><h2 id="appendix-title">Future deep dives.</h2><p className="scene-thesis">These topics deserve focused optional scenes. They are listed here without expanding the core presentation.</p></div>
+    <div className="appendix-list">{topics.map((topic, index) => <div key={topic}><span>{String(index + 1).padStart(2, '0')}</span><strong>{topic}</strong><small>PLANNED MODULE</small></div>)}</div>
+  </section>;
+}
+
 function FieldTest() {
   const [index, setIndex] = useState(0);
   const [answer, setAnswer] = useState(null);
@@ -1221,14 +1526,14 @@ function FieldTest() {
   return (
     <section className="scene-shell field-scene" aria-labelledby="field-title">
       <div className="story-column">
-        <div className="scene-index"><span>Field test</span><strong>replay · 03 signals</strong></div>
+        <div className="scene-index"><span>Field test</span><strong>replay · {String(quiz.length).padStart(2, '0')} signals</strong></div>
         <p className="scene-kicker">Apply the method</p>
         <h2 id="field-title">Identify the failed check.</h2>
         <p className="scene-thesis">First, find the system boundary. Then select the control that verifies the claim.</p>
         <div className="field-score"><span>SECURITY SCORE</span><strong>{score} / {quiz.length}</strong></div>
       </div>
       <div className="quiz-card">
-        <div className="quiz-meta"><span>SIGNAL {String(index + 1).padStart(2, '0')} / 03</span><strong>req_7F2A · REPLAY</strong></div>
+        <div className="quiz-meta"><span>SIGNAL {String(index + 1).padStart(2, '0')} / {String(quiz.length).padStart(2, '0')}</span><strong>req_7F2A · REPLAY</strong></div>
         <h3>{item.question}</h3>
         <div className="quiz-choices">
           {item.choices.map((choice, choiceIndex) => (
@@ -1250,11 +1555,12 @@ function FieldTest() {
 
 function Closing({ restart, openLens }) {
   const questions = [
-    ['01', 'Who sent the claim?', 'Verify the identity and origin.'],
-    ['02', 'Can this user do this action?', 'Authorize the action and object for every request.'],
-    ['03', 'Can input change the program?', 'Keep untrusted values separate from program structure.'],
-    ['04', 'Which system owns this value?', 'Calculate price, state, and sequence on the server.'],
-    ['05', 'What must happen after a failure?', 'Use a safe state. Record a request ID and useful logs.']
+    ['01', 'What asset can be harmed?', 'Name confidentiality, integrity, availability, and impact.'],
+    ['02', 'Who sent each claim?', 'Verify identity, origin, and request context.'],
+    ['03', 'Can this user do this action?', 'Authorize the action and object for every request.'],
+    ['04', 'Can input become code?', 'Use safe APIs and encode for the output context.'],
+    ['05', 'Which system owns this value?', 'Re-derive price, ownership, state, and sequence server-side.'],
+    ['06', 'What happens when controls fail?', 'Contain, detect, respond, and recover safely.']
   ];
   return (
     <section className="scene-shell closing-scene" aria-labelledby="closing-title">
@@ -1438,7 +1744,7 @@ export default function App() {
     <>
       <a className="skip-link" href="#presentation">Skip to presentation</a>
       <header className="topbar">
-        <button className="brand" type="button" onClick={() => goTo(0)} aria-label="Go to opening">
+        <button className="brand" type="button" onClick={() => goTo(0)} aria-label="Go to beginning">
           <span className="brand-orbit" aria-hidden="true"><i /><i /></span><span>REQUEST <em>UNDER FIRE</em></span>
         </button>
         <div className="live-clock" aria-live="polite"><span>{scene.zone.toUpperCase()}</span><strong>{scene.time === 'complete' || scene.time === 'replay' ? scene.time : `t = ${scene.time}`}</strong></div>
@@ -1462,12 +1768,16 @@ export default function App() {
             exit={reduceMotion || inputMode === 'keyboard' ? { opacity: 0 } : { opacity: 0, transform: `translateX(${direction * -20}px) scale(.998)` }}
             transition={{ type: 'spring', visualDuration: .34, bounce: .04 }}>
             {scene.type !== 'opening' && <h1 className="sr-only">Request Under Fire: {scene.label}</h1>}
-            {scene.type === 'opening' && <Opening next={() => goTo(1)} branch={branch} setBranch={setBranch} />}
+            {scene.type === 'opening' && <Opening next={() => goTo(sceneIndex + 1)} branch={branch} setBranch={setBranch} />}
+            {scene.type === 'foundation' && <FoundationScene scene={scene} />}
+            {scene.type === 'pki-bridge' && <PkiToAppBridge next={() => goTo(sceneIndex + 1)} />}
             {scene.type === 'recon' && <ReconWorkbench next={() => goTo(sceneIndex + 1)} />}
             {scene.type === 'journey' && <JourneyScene scene={scene} branch={branch} setBranch={setBranch} />}
             {scene.type === 'bridge' && <ReflectionBridge branch={branch} next={() => goTo(sceneIndex + 1)} />}
             {scene.type === 'checkpoint' && <Checkpoint scene={scene} phase={phase} setPhase={setPhase} />}
             {scene.type === 'quiz' && <FieldTest />}
+            {scene.type === 'lifecycle' && <LifecycleScene />}
+            {scene.type === 'appendix' && <AppendixPlaceholder />}
             {scene.type === 'closing' && <Closing restart={() => goTo(0)} openLens={() => lensRef.current?.showModal()} />}
           </motion.div>
         </AnimatePresence>
