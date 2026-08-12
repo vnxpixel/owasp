@@ -1,0 +1,1 @@
+import{parseAnimateLayoutArgs as o,LayoutAnimationBuilder as t}from"motion";function n(n,e,p){const{scope:r,updateDom:i,defaultOptions:m}=o(n,e,p);return new t(r,i,m)}export{n as unstable_animateLayout};
